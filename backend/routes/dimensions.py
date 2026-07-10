@@ -1,13 +1,27 @@
-from flask import Blueprint, jsonify
-from models import DimProducto, DimCliente, DimSucursal
+from flask import Blueprint, jsonify, request
+from models import db, DimProducto, DimCliente, DimSucursal, StockSucursal
+from sqlalchemy import func
 
 dimensions_bp = Blueprint('dimensions', __name__)
 
 @dimensions_bp.route('/productos', methods=['GET'])
 def get_productos():
     try:
+        sucursal_key = request.args.get('sucursalKey', type=int)
         productos = DimProducto.query.all()
-        return jsonify([p.to_dict() for p in productos]), 200
+        
+        result = []
+        for p in productos:
+            d = p.to_dict()
+            if sucursal_key:
+                stock_entry = StockSucursal.query.filter_by(SucursalKey=sucursal_key, ProductoKey=p.ProductoKey).first()
+                d['Stock'] = stock_entry.Stock if stock_entry else 0
+            else:
+                total_stock = db.session.query(func.sum(StockSucursal.Stock)).filter_by(ProductoKey=p.ProductoKey).scalar()
+                d['Stock'] = int(total_stock) if total_stock is not None else 0
+            result.append(d)
+            
+        return jsonify(result), 200
     except Exception as e:
         return jsonify({'error': 'Error al obtener productos', 'message': str(e)}), 500
 

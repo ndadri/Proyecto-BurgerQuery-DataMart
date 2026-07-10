@@ -72,6 +72,7 @@ export interface VentasCategoria {
 }
 
 export interface VentasSucursal {
+  SucursalKey: number;
   NombreSucursal: string;
   Ciudad: string;
   total: number;
@@ -100,4 +101,21 @@ export interface DashboardReport {
   inventario: DimProducto[];
   ventas_hora: VentasHora[];
 }
+export interface DimPersonal {
+  PersonalKey: number;
+  Nombre: string;
+  Apellido: string;
+  Usuario: string;
+  SucursalKey: number;
+  NombreSucursal?: string;
+  Ciudad?: string;
+}
 
+export interface SessionInfo {
+  role: 'admin' | 'vendedor';
+  username: string;
+  name: string;
+  sucursalKey: number | null;
+  nombreSucursal: string | null;
+  token: string;
+}

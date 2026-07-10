@@ -1,0 +1,90 @@
+<div class="login-container">
+  <div class="login-card glass-card animate-fade-in">
+    
+    <div class="login-header">
+      <div class="brand">
+        <span class="logo-emoji"><i class="icon-burger"></i></span>
+        <h1 class="gradient-text">BurgerQuery OLAP</h1>
+      </div>
+      <p class="subtitle">Data Mart & Control de Inventarios Analítico</p>
+    </div>
+
+    <!-- Pestañas de Roles -->
+    <div class="role-tabs">
+      <button 
+        type="button" 
+        class="tab-btn" 
+        [class.active]="role === 'admin'" 
+        (click)="setRole('admin')">
+        <i class="icon-analytics" style="margin-right: 0.25rem;"></i> Administrador
+      </button>
+      <button 
+        type="button" 
+        class="tab-btn" 
+        [class.active]="role === 'vendedor'" 
+        (click)="setRole('vendedor')">
+        <i class="icon-user" style="margin-right: 0.25rem;"></i> Vendedor
+      </button>
+    </div>
+
+    <main class="login-body">
+      @if (mensajeError) {
+        <div class="alert alert-danger animate-fade-in">
+          <strong>Error:</strong> {{ mensajeError }}
+        </div>
+      }
+
+      <form (ngSubmit)="iniciarSesion()" #loginForm="ngForm" class="login-form">
+        
+        <!-- Usuario -->
+        <div class="form-group">
+          <label for="username">
+            <i class="icon-user"></i> Usuario
+          </label>
+          <input 
+            id="username" 
+            name="username" 
+            type="text" 
+            [(ngModel)]="username" 
+            placeholder="Ingrese su usuario" 
+            required 
+            autocomplete="username"
+            class="form-control">
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-group">
+          <label for="password">
+            <i class="icon-receipt"></i> Contraseña
+          </label>
+          <input 
+            id="password" 
+            name="password" 
+            type="password" 
+            [(ngModel)]="password" 
+            placeholder="Ingrese su contraseña" 
+            required 
+            autocomplete="current-password"
+            class="form-control">
+        </div>
+
+        <button 
+          type="submit" 
+          class="btn btn-primary btn-block" 
+          [disabled]="cargando || !loginForm.form.valid">
+          @if (cargando) {
+            <span class="spinner-small" style="margin-right: 0.5rem;"></span> Validando...
+          } @else {
+            Ingresar <i class="icon-analytics" style="margin-left: 0.25rem;"></i>
+          }
+        </button>
+
+      </form>
+    </main>
+
+    <footer class="login-footer">
+      <p>BurgerQuery S.A. &copy; 2026. Todos los derechos reservados.</p>
+    </footer>
+
+  </div>
+</div>

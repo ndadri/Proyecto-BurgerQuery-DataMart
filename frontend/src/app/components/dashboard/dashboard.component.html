@@ -31,6 +31,38 @@
     </div>
   }
 
+  <!-- Filtros Activos -->
+  @if (sucursalSeleccionada || diaSemanaSeleccionado || horaSeleccionada !== null) {
+    <div class="filter-banner glass-card animate-fade-in" style="margin-bottom: 1.5rem;">
+      <div class="filter-info" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class="icon-analytics"></i>
+          <span style="font-weight: 700;">Filtros activos:</span>
+        </div>
+        
+        @if (sucursalSeleccionada) {
+          <span class="badge info-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+            Sucursal: {{ sucursalSeleccionada.NombreSucursal }}
+            <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;" (click)="sucursalSeleccionada = null; cargarDatos()" title="Quitar filtro de sucursal"></i>
+          </span>
+        }
+        
+        @if (diaSemanaSeleccionado) {
+          <span class="badge info-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+            Día: {{ obtenerNombreDia(diaSemanaSeleccionado) }}
+            @if (horaSeleccionada !== null) {
+              a las {{ horaSeleccionada }}:00 hs
+            }
+            <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;" (click)="limpiarFiltroTemporal()" title="Quitar filtro de tiempo"></i>
+          </span>
+        }
+      </div>
+      <button class="btn btn-clear-filter" (click)="limpiarFiltro()">
+        Limpiar Todo <i class="icon-close"></i>
+      </button>
+    </div>
+  }
+
   <!-- Cargando... -->
   @if (cargando && !reporte) {
     <div class="loader-container">
@@ -89,7 +121,7 @@
         <div class="charts-grid">
           <!-- Ventas por Categoría -->
           <div class="glass-card table-card">
-            <h3>Ventas por Categoría</h3>
+            <h3>Ventas por Categoría{{ sucursalSeleccionada ? ' (' + sucursalSeleccionada.NombreSucursal + ')' : '' }}{{ diaSemanaSeleccionado ? ' - ' + obtenerNombreDia(diaSemanaSeleccionado) : '' }}{{ horaSeleccionada !== null ? ' a las ' + horaSeleccionada + ':00' : '' }}</h3>
             <div class="table-responsive">
               <table class="data-table">
                 <thead>
@@ -118,7 +150,7 @@
 
           <!-- Ventas por Sucursal -->
           <div class="glass-card table-card">
-            <h3>Ventas por Sucursal</h3>
+            <h3>Ventas por Sucursal <small style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">(Haz clic para filtrar)</small></h3>
             <div class="table-responsive">
               <table class="data-table">
                 <thead>
@@ -129,8 +161,10 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (suc of reporte.ventas_sucursal; track suc.NombreSucursal) {
-                    <tr>
+                  @for (suc of reporte.ventas_sucursal; track suc.SucursalKey) {
+                    <tr (click)="seleccionarSucursal(suc)" 
+                        [class.selected-row]="sucursalSeleccionada?.SucursalKey === suc.SucursalKey" 
+                        class="clickable-row">
                       <td><strong>{{ suc.NombreSucursal }}</strong></td>
                       <td>{{ suc.Ciudad }}</td>
                       <td class="text-right font-semibold">${{ suc.total | number:'1.2-2' }}</td>
@@ -149,7 +183,7 @@
         <!-- Diagrama de Calor de Ventas -->
         <div class="glass-card heatmap-card">
           <div class="card-title-container">
-            <h3><i class="icon-calendar"></i> Diagrama de Calor: Horas Pico de Ventas</h3>
+            <h3><i class="icon-calendar"></i> Diagrama de Calor: Horas Pico{{ sucursalSeleccionada ? ' (' + sucursalSeleccionada.NombreSucursal + ')' : '' }}{{ diaSemanaSeleccionado ? ' - ' + obtenerNombreDia(diaSemanaSeleccionado) : '' }}{{ horaSeleccionada !== null ? ' a las ' + horaSeleccionada + ':00' : '' }}</h3>
             <span class="badge info-badge">Análisis Temporal</span>
           </div>
           <p class="description-text">
@@ -161,7 +195,12 @@
             <div class="heatmap-header">
               <div class="time-label-empty"></div>
               @for (dia of diasSemana; track dia.key) {
-                <div class="day-label">{{ dia.label }}</div>
+                <div class="day-label clickable-day-header" 
+                     (click)="seleccionarDiaSemana(dia.key)"
+                     [class.active-day-header]="diaSemanaSeleccionado === dia.key"
+                     [title]="'Filtrar por ' + dia.label">
+                  {{ dia.label }}
+                </div>
               }
             </div>
             
@@ -172,7 +211,9 @@
                   <div class="time-label">{{ hora }}:00</div>
                   @for (dia of diasSemana; track dia.key) {
                     <div class="heatmap-cell" 
+                         (click)="seleccionarCeldaHeatmap(dia.key, hora)"
                          [style.background-color]="obtenerColorCelda(dia.key, hora)"
+                         [class.active-heatmap-cell]="diaSemanaSeleccionado === dia.key && horaSeleccionada === hora"
                          [attr.data-sales]="obtenerVentasCelda(dia.key, hora)"
                          [title]="dia.label + ' a las ' + hora + ':00 hs - ' + obtenerVentasCelda(dia.key, hora) + ' transacciones'">
                     </div>
@@ -200,7 +241,7 @@
         <!-- Inventario y Validación de Stock (Efecto del Trigger) -->
         <div class="glass-card inventory-card">
           <div class="card-title-container">
-            <h3><i class="icon-inventory"></i> Dim_Producto - Niveles de Stock</h3>
+            <h3><i class="icon-inventory"></i> Dim_Producto - Niveles de Stock{{ sucursalSeleccionada ? ' (' + sucursalSeleccionada.NombreSucursal + ')' : '' }}{{ diaSemanaSeleccionado ? ' - ' + obtenerNombreDia(diaSemanaSeleccionado) : '' }}{{ horaSeleccionada !== null ? ' a las ' + horaSeleccionada + ':00' : '' }}</h3>
             <span class="badge info-badge">Monitoreado por Trigger</span>
           </div>
           <p class="description-text">
@@ -240,7 +281,7 @@
 
         <!-- Registro de Últimas Transacciones -->
         <div class="glass-card transactions-card">
-          <h3>Últimas 10 Ventas Registradas (Fact_Ventas)</h3>
+          <h3>Últimas 10 Ventas Registradas{{ sucursalSeleccionada ? ' (' + sucursalSeleccionada.NombreSucursal + ')' : '' }}{{ diaSemanaSeleccionado ? ' - ' + obtenerNombreDia(diaSemanaSeleccionado) : '' }}{{ horaSeleccionada !== null ? ' a las ' + horaSeleccionada + ':00' : '' }}</h3>
           <div class="table-responsive">
             <table class="data-table">
               <thead>
@@ -252,6 +293,7 @@
                   <th>Cant.</th>
                   <th>Sucursal</th>
                   <th class="text-right">Monto Final</th>
+                  <th class="text-center" style="width: 80px;">Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -264,10 +306,15 @@
                     <td>{{ venta.Cantidad }}</td>
                     <td>{{ venta.Sucursal?.NombreSucursal }}</td>
                     <td class="text-right font-semibold color-accent">${{ venta.MontoTotal | number:'1.2-2' }}</td>
+                    <td class="text-center">
+                      <button class="btn btn-action-edit" (click)="abrirModalEdicion(venta)" title="Editar Venta">
+                        <i class="icon-edit"></i>
+                      </button>
+                    </td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="7" class="text-center text-muted" style="padding: 2rem 0;">
+                    <td colspan="8" class="text-center text-muted" style="padding: 2rem 0;">
                       No se han registrado ventas todavía. Use el formulario de la derecha para registrar la primera.
                     </td>
                   </tr>
@@ -284,6 +331,118 @@
         <app-billing-form (ventaRegistrada)="cargarDatos()"></app-billing-form>
       </div>
 
+    </div>
+  }
+
+  <!-- Modal de Edición de Ventas -->
+  @if (mostrarModalEdicion) {
+    <div class="modal-overlay animate-fade-in" (click)="cerrarModalEdicion()">
+      <div class="modal-content glass-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h2 class="gradient-text"><i class="icon-edit"></i> Editar Venta #{{ ventaSeleccionadaParaEditar?.VentaID }}</h2>
+          <button class="btn-close-modal" (click)="cerrarModalEdicion()">
+            <i class="icon-close"></i>
+          </button>
+        </header>
+
+        <main class="modal-body">
+          @if (mensajeErrorModal) {
+            <div class="alert alert-danger" style="margin-bottom: 1.25rem;">
+              <strong>Alerta:</strong> {{ mensajeErrorModal }}
+            </div>
+          }
+
+          <form (submit)="guardarEdicion()" class="edit-form">
+            <div class="form-grid">
+              <!-- Producto -->
+              <div class="form-group">
+                <label for="editProducto"><i class="icon-burger"></i> Producto *</label>
+                <select id="editProducto" name="editProducto" [(ngModel)]="editProductoKey" required>
+                  <option [value]="null" disabled>Seleccione un producto</option>
+                  @for (prod of productos; track prod.ProductoKey) {
+                    <option [value]="prod.ProductoKey">
+                      {{ prod.Nombre }} (${{ prod.PrecioUnitario | number:'1.2-2' }}) [Stock: {{ prod.Stock }}]
+                    </option>
+                  }
+                </select>
+              </div>
+
+              <!-- Cliente -->
+              <div class="form-group">
+                <label for="editCliente"><i class="icon-user"></i> Cliente *</label>
+                <select id="editCliente" name="editCliente" [(ngModel)]="editClienteKey" required>
+                  <option [value]="null" disabled>Seleccione un cliente</option>
+                  @for (cli of clientes; track cli.ClienteKey) {
+                    <option [value]="cli.ClienteKey">{{ cli.NombreCompleto }} ({{ cli.TipoCliente }})</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Sucursal -->
+              <div class="form-group">
+                <label for="editSucursal"><i class="icon-shop"></i> Sucursal *</label>
+                <select id="editSucursal" name="editSucursal" [(ngModel)]="editSucursalKey" (change)="onEditSucursalChange()" [disabled]="session?.role === 'vendedor'" required>
+                  <option [value]="null" disabled>Seleccione una sucursal</option>
+                  @for (suc of sucursales; track suc.SucursalKey) {
+                    <option [value]="suc.SucursalKey">{{ suc.NombreSucursal }} ({{ suc.Ciudad }})</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Cantidad -->
+              <div class="form-group">
+                <label for="editCantidad"><i class="icon-inventory"></i> Cantidad *</label>
+                <input id="editCantidad" name="editCantidad" type="number" [(ngModel)]="editCantidad" min="1" required>
+              </div>
+
+              <!-- Descuento -->
+              <div class="form-group">
+                <label for="editDescuento"><i class="icon-receipt"></i> Descuento ($)</label>
+                <input id="editDescuento" name="editDescuento" type="number" step="0.01" [(ngModel)]="editDescuento" min="0">
+              </div>
+
+              <!-- Fecha -->
+              <div class="form-group">
+                <label for="editFecha"><i class="icon-calendar"></i> Fecha *</label>
+                <input id="editFecha" name="editFecha" type="date" [(ngModel)]="editFecha" required>
+              </div>
+
+              <!-- Hora -->
+              <div class="form-group">
+                <label for="editHora"><i class="icon-calendar"></i> Hora (0-23) *</label>
+                <input id="editHora" name="editHora" type="number" [(ngModel)]="editHora" min="0" max="23" required>
+              </div>
+            </div>
+
+            <!-- Previsualización de Montos -->
+            <div class="bill-preview-box" style="margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-color);">
+              <div class="preview-row" style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                <span>Subtotal:</span>
+                <span>${{ editSubtotal | number:'1.2-2' }}</span>
+              </div>
+              <div class="preview-row" style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.75rem; color: var(--text-secondary);">
+                <span>Descuento:</span>
+                <span style="color: #ef4444;">-${{ editDescuento | number:'1.2-2' }}</span>
+              </div>
+              <div class="preview-row total-row" style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; border-top: 1px solid var(--border-color); padding-top: 0.75rem; color: var(--text-primary);">
+                <span>Total Estimado:</span>
+                <span class="color-accent">${{ editTotal | number:'1.2-2' }}</span>
+              </div>
+            </div>
+
+            <footer class="form-actions" style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+              <button type="button" class="btn btn-secondary" (click)="cerrarModalEdicion()">Cancelar</button>
+              <button type="submit" class="btn btn-accent" [disabled]="guardandoEdicion" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                @if (guardandoEdicion) {
+                  <span class="spinner-small"></span> Guardando...
+                } @else {
+                  <i class="icon-save"></i> Guardar Cambios
+                }
+              </button>
+            </footer>
+          </form>
+        </main>
+      </div>
     </div>
   }
 </div>

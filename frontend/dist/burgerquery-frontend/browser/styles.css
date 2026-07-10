@@ -1,64 +1,59 @@
-/* ==========================================
-   ESTILOS GLOBALES - BURGERQUERY DATA MART
-   Tema: Glassmorphism Dark Moderno
-   ========================================== */
+@import "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap";
+@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css";
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-
+/* src/styles.css */
 :root {
-  /* Paleta de colores premium */
-  --primary-color: #f59e0b; /* Amarillo/Naranja Burger */
+  --primary-color: #f59e0b;
   --primary-hover: #d97706;
   --primary-glow: rgba(245, 158, 11, 0.15);
-  
-  --accent-color: #3b82f6;  /* Azul eléctrico para OLAP/Data */
+  --accent-color: #3b82f6;
   --accent-glow: rgba(59, 130, 246, 0.2);
-  
-  --success-color: #10b981; /* Verde esmeralda */
-  --error-color: #ef4444;   /* Rojo coral */
-  --info-color: #06b6d4;    /* Cyan */
-  
-  /* Sistema de fondos e interfaz oscura */
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  --info-color: #06b6d4;
   --bg-body: #090d16;
   --bg-card: rgba(17, 24, 39, 0.7);
   --bg-card-light: rgba(31, 41, 55, 0.45);
   --bg-input: #111827;
   --bg-hover: rgba(255, 255, 255, 0.03);
-  
-  /* Bordes y Sombras */
   --border-color: rgba(255, 255, 255, 0.07);
   --border-focus: rgba(245, 158, 11, 0.5);
   --shadow-lg: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  
-  /* Tipografía y textos */
   --text-primary: #f3f4f6;
   --text-secondary: #d1d5db;
   --text-muted: #9ca3af;
 }
-
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-
 body {
   background-color: var(--bg-body);
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+  background-image:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(245, 158, 11, 0.05) 0%,
+      transparent 40%),
+    radial-gradient(
+      circle at 90% 80%,
+      rgba(59, 130, 246, 0.05) 0%,
+      transparent 40%);
   color: var(--text-primary);
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    "Outfit",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   min-height: 100vh;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   line-height: 1.5;
 }
-
-/* Glassmorphism base */
 .glass-card {
   background: var(--bg-card);
   backdrop-filter: blur(12px);
@@ -69,26 +64,24 @@ body {
   padding: 1.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
-/* Títulos y gradientes */
 .gradient-text {
-  background: linear-gradient(135deg, #ffffff 0%, var(--primary-color) 100%);
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff 0%,
+      var(--primary-color) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
 .card-header {
   margin-bottom: 1.25rem;
 }
-
 .card-subtitle {
   color: var(--text-muted);
   font-size: 0.85rem;
   margin-top: 0.25rem;
 }
-
-/* Botones con microanimaciones */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -104,56 +97,61 @@ body {
   text-decoration: none;
   outline: none;
 }
-
 .btn:active {
   transform: scale(0.97);
 }
-
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #d97706 100%);
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary-color) 0%,
+      #d97706 100%);
   color: #000000;
   box-shadow: 0 4px 12px var(--primary-glow);
 }
-
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%);
+  background:
+    linear-gradient(
+      135deg,
+      #fbbf24 0%,
+      #b45309 100%);
   box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
 }
-
 .btn-primary:disabled {
   background: var(--bg-card-light);
   color: var(--text-muted);
   cursor: not-allowed;
   box-shadow: none;
 }
-
 .btn-secondary {
   background-color: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
 }
-
 .btn-secondary:hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.08);
   border-color: var(--text-muted);
 }
-
 .btn-accent {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #1d4ed8 100%);
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent-color) 0%,
+      #1d4ed8 100%);
   color: #ffffff;
   box-shadow: 0 4px 12px var(--accent-glow);
 }
-
 .btn-accent:hover:not(:disabled) {
-  background: linear-gradient(135deg, #60a5fa 0%, #1e40af 100%);
+  background:
+    linear-gradient(
+      135deg,
+      #60a5fa 0%,
+      #1e40af 100%);
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
 }
-
 .btn-block {
   width: 100%;
 }
-
-/* Alertas Glass */
 .alert {
   padding: 1rem 1.25rem;
   border-radius: 8px;
@@ -163,46 +161,66 @@ body {
   flex-direction: column;
   border-left: 4px solid transparent;
 }
-
 .alert-success {
   background-color: rgba(16, 185, 129, 0.1);
   border-color: var(--success-color);
   color: #a7f3d0;
 }
-
 .alert-danger {
   background-color: rgba(239, 68, 68, 0.1);
   border-color: var(--error-color);
   color: #fca5a5;
 }
-
 .alert-info {
   background-color: rgba(6, 182, 212, 0.1);
   border-color: var(--info-color);
   color: #c5f2f7;
 }
-
-/* Iconos de Fallback con FontAwesome */
-[class^="icon-"] {
+[class^=icon-] {
   display: inline-block;
   vertical-align: middle;
 }
-
-[class^="icon-"]::before {
+[class^=icon-]::before {
   font-family: "Font Awesome 6 Free";
   font-weight: 900;
   display: inline-block;
 }
+.icon-burger::before {
+  content: "\f80f";
+}
+.icon-user::before {
+  content: "\f007";
+}
+.icon-shop::before {
+  content: "\f54f";
+}
+.icon-calendar::before {
+  content: "\f073";
+}
+.icon-receipt::before {
+  content: "\f543";
+}
+.icon-save::before {
+  content: "\f0c7";
+}
+.icon-refresh::before {
+  content: "\f021";
+}
+.icon-db::before {
+  content: "\f1c0";
+}
+.icon-analytics::before {
+  content: "\f080";
+}
+.icon-inventory::before {
+  content: "\f49e";
+}
+.icon-edit::before {
+  content: "\f304";
+}
+.icon-close::before {
+  content: "\f00d";
+}
 
-.icon-burger::before { content: "\f80f"; }
-.icon-user::before { content: "\f007"; }
-.icon-shop::before { content: "\f54f"; }
-.icon-calendar::before { content: "\f073"; }
-.icon-receipt::before { content: "\f543"; }
-.icon-save::before { content: "\f0c7"; }
-.icon-refresh::before { content: "\f021"; }
-.icon-db::before { content: "\f1c0"; }
-.icon-analytics::before { content: "\f080"; }
-.icon-inventory::before { content: "\f49e"; }
-.icon-edit::before { content: "\f304"; }
-.icon-close::before { content: "\f00d"; }
+/* angular:styles/global:styles */
+/*# sourceMappingURL=styles.css.map */

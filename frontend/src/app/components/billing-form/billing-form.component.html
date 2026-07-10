@@ -50,7 +50,7 @@
       <!-- Sucursal -->
       <div class="form-group">
         <label for="sucursal"><i class="icon-shop"></i> Sucursal *</label>
-        <select id="sucursal" name="sucursal" [(ngModel)]="sucursalKey" required class="form-control">
+        <select id="sucursal" name="sucursal" [(ngModel)]="sucursalKey" (change)="onSucursalChange()" [disabled]="session?.role === 'vendedor'" required class="form-control">
           <option [ngValue]="null" disabled selected>Seleccione una Sucursal</option>
           @for (suc of sucursales; track suc.SucursalKey) {
             <option [value]="suc.SucursalKey">

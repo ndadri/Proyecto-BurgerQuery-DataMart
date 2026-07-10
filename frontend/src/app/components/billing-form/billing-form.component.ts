@@ -2,7 +2,7 @@ import { Component, OnInit, inject, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
-import { DimProducto, DimCliente, DimSucursal, VentaPayload } from '../../models/datamart.model';
+import { DimProducto, DimCliente, DimSucursal, VentaPayload, SessionInfo } from '../../models/datamart.model';
 
 @Component({
   selector: 'app-billing-form',
@@ -34,8 +34,21 @@ export class BillingFormComponent implements OnInit {
   mensajeExito: string | null = null;
   mensajeError: string | null = null;
   cargando: boolean = false;
+  session: SessionInfo | null = null;
 
   ngOnInit(): void {
+    const sessionStr = localStorage.getItem('bq_session');
+    if (sessionStr) {
+      try {
+        this.session = JSON.parse(sessionStr) as SessionInfo;
+        if (this.session && this.session.role === 'vendedor') {
+          this.sucursalKey = this.session.sucursalKey;
+        }
+      } catch (e) {
+        console.error('Error parsing session in billing form:', e);
+      }
+    }
+
     // Establecer fecha y hora de hoy por defecto
     const hoy = new Date();
     this.fecha = hoy.toISOString().split('T')[0];
@@ -45,7 +58,8 @@ export class BillingFormComponent implements OnInit {
   }
 
   cargarDimensiones(): void {
-    this.apiService.getProductos().subscribe({
+    const sucursalId = this.sucursalKey ? Number(this.sucursalKey) : undefined;
+    this.apiService.getProductos(sucursalId).subscribe({
       next: (data) => this.productos = data,
       error: (err) => this.mensajeError = 'Error al cargar productos: ' + (err.error?.message || err.message)
     });
@@ -58,6 +72,14 @@ export class BillingFormComponent implements OnInit {
     this.apiService.getSucursales().subscribe({
       next: (data) => this.sucursales = data,
       error: (err) => this.mensajeError = 'Error al cargar sucursales: ' + (err.error?.message || err.message)
+    });
+  }
+
+  onSucursalChange(): void {
+    const sucursalId = this.sucursalKey ? Number(this.sucursalKey) : undefined;
+    this.apiService.getProductos(sucursalId).subscribe({
+      next: (data) => this.productos = data,
+      error: (err) => this.mensajeError = 'Error al cargar productos: ' + (err.error?.message || err.message)
     });
   }
 

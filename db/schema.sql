@@ -40,6 +40,22 @@ CREATE TABLE "Dim_Sucursal" (
     "Ciudad" VARCHAR(100)
 );
 
+CREATE TABLE "Stock_Sucursal" (
+    "SucursalKey" INT REFERENCES "Dim_Sucursal"("SucursalKey"),
+    "ProductoKey" INT REFERENCES "Dim_Producto"("ProductoKey"),
+    "Stock" INT NOT NULL,
+    PRIMARY KEY ("SucursalKey", "ProductoKey")
+);
+
+CREATE TABLE "Dim_Personal" (
+    "PersonalKey" SERIAL PRIMARY KEY,
+    "Nombre" VARCHAR(100) NOT NULL,
+    "Apellido" VARCHAR(100) NOT NULL,
+    "Usuario" VARCHAR(50) UNIQUE NOT NULL,
+    "Contrasena" VARCHAR(100) NOT NULL,
+    "SucursalKey" INT NOT NULL REFERENCES "Dim_Sucursal"("SucursalKey")
+);
+
 -- Tabla de Hechos
 CREATE TABLE "Fact_Ventas" (
     "VentaID" SERIAL PRIMARY KEY,
@@ -58,9 +74,9 @@ CREATE TABLE "Fact_Ventas" (
 CREATE OR REPLACE FUNCTION actualizar_stock_por_venta()
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE "Dim_Producto"
+    UPDATE "Stock_Sucursal"
     SET "Stock" = "Stock" - NEW."Cantidad"
-    WHERE "ProductoKey" = NEW."ProductoKey";
+    WHERE "SucursalKey" = NEW."SucursalKey" AND "ProductoKey" = NEW."ProductoKey";
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -142,4 +158,32 @@ INSERT INTO "Fact_Ventas" ("TiempoKey", "ProductoKey", "ClienteKey", "SucursalKe
 (20260705, 1, 3, 2, 4, 5.99, 23.96, 0.00, 20),
 (20260705, 6, 4, 3, 3, 3.49, 10.47, 0.00, 20),
 (20260705, 3, 5, 4, 2, 2.49, 4.98, 0.00, 21);
+
+
+-- ==========================================
+-- DATOS SEMILLA PARA STOCK POR SUCURSAL
+-- ==========================================
+
+INSERT INTO "Stock_Sucursal" ("SucursalKey", "ProductoKey", "Stock") VALUES
+-- Producto 1 (Hamburguesa Doble Queso - Total: 150): Centro=60, Plaza Este=45, Norte=30, Playas=15
+(1, 1, 60), (2, 1, 45), (3, 1, 30), (4, 1, 15),
+-- Producto 2 (Hamburguesa de Pollo Crispy - Total: 120): Centro=48, Plaza Este=36, Norte=24, Playas=12
+(1, 2, 48), (2, 2, 36), (3, 2, 24), (4, 2, 12),
+-- Producto 3 (Papas Fritas Medianas - Total: 300): Centro=120, Plaza Este=90, Norte=60, Playas=30
+(1, 3, 120), (2, 3, 90), (3, 3, 60), (4, 3, 30),
+-- Producto 4 (Nuggets de Pollo - Total: 200): Centro=80, Plaza Este=60, Norte=40, Playas=20
+(1, 4, 80), (2, 4, 60), (3, 4, 40), (4, 4, 20),
+-- Producto 5 (Refresco de Cola Grande - Total: 500): Centro=200, Plaza Este=150, Norte=100, Playas=50
+(1, 5, 200), (2, 5, 150), (3, 5, 100), (4, 5, 50),
+-- Producto 6 (Malteada de Vainilla - Total: 80): Centro=32, Plaza Este=24, Norte=16, Playas=8
+(1, 6, 32), (2, 6, 24), (3, 6, 16), (4, 6, 8);
+
+
+-- ==========================================
+-- DATOS SEMILLA PARA PERSONAL DE VENTAS
+-- ==========================================
+
+INSERT INTO "Dim_Personal" ("Nombre", "Apellido", "Usuario", "Contrasena", "SucursalKey") VALUES
+('Juan', 'Pérez', 'juan_centro', '1234', 1),
+('María', 'Gómez', 'maria_playas', '5678', 4);
 

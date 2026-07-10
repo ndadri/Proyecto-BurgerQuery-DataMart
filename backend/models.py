@@ -118,3 +118,48 @@ class FactVentas(db.Model):
             'Tiempo': self.tiempo.to_dict() if self.tiempo else None
         }
 
+
+class StockSucursal(db.Model):
+    __tablename__ = 'Stock_Sucursal'
+    
+    SucursalKey = db.Column('SucursalKey', db.Integer, db.ForeignKey('Dim_Sucursal.SucursalKey'), primary_key=True)
+    ProductoKey = db.Column('ProductoKey', db.Integer, db.ForeignKey('Dim_Producto.ProductoKey'), primary_key=True)
+    Stock = db.Column('Stock', db.Integer, nullable=False)
+    
+    # Relaciones para joins
+    sucursal = db.relationship('DimSucursal', backref='stocks')
+    producto = db.relationship('DimProducto', backref='stocks')
+    
+    def to_dict(self):
+        return {
+            'SucursalKey': self.SucursalKey,
+            'ProductoKey': self.ProductoKey,
+            'Stock': self.Stock,
+            'Producto': self.producto.to_dict() if self.producto else None,
+            'Sucursal': self.sucursal.to_dict() if self.sucursal else None
+        }
+
+
+class DimPersonal(db.Model):
+    __tablename__ = 'Dim_Personal'
+    
+    PersonalKey = db.Column('PersonalKey', db.Integer, primary_key=True, autoincrement=True)
+    Nombre = db.Column('Nombre', db.String(100), nullable=False)
+    Apellido = db.Column('Apellido', db.String(100), nullable=False)
+    Usuario = db.Column('Usuario', db.String(50), unique=True, nullable=False)
+    Contrasena = db.Column('Contrasena', db.String(100), nullable=False)
+    SucursalKey = db.Column('SucursalKey', db.Integer, db.ForeignKey('Dim_Sucursal.SucursalKey'), nullable=False)
+    
+    sucursal = db.relationship('DimSucursal', backref='personal')
+    
+    def to_dict(self):
+        return {
+            'PersonalKey': self.PersonalKey,
+            'Nombre': self.Nombre,
+            'Apellido': self.Apellido,
+            'Usuario': self.Usuario,
+            'SucursalKey': self.SucursalKey,
+            'NombreSucursal': self.sucursal.NombreSucursal if self.sucursal else None,
+            'Ciudad': self.sucursal.Ciudad if self.sucursal else None
+        }
+
