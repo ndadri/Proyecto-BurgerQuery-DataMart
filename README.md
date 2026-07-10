@@ -9,7 +9,7 @@ El sistema consta de:
 
 ---
 
-## 📋 Requisitos Previos
+## Requisitos Previos
 
 Asegúrate de que la nueva máquina tenga instalado lo siguiente:
 1. **Python 3.10+** (Asegurar que esté marcado "Add Python to PATH" durante la instalación).
@@ -18,7 +18,7 @@ Asegúrate de que la nueva máquina tenga instalado lo siguiente:
 
 ---
 
-## 🛠️ Paso 1: Configurar la Base de Datos (PostgreSQL)
+## Paso 1: Configurar la Base de Datos (PostgreSQL)
 
 1. Abre **pgAdmin** o la consola de PostgreSQL (`psql`).
 2. Crea una base de datos vacía llamada exactamente:
@@ -35,7 +35,7 @@ Asegúrate de que la nueva máquina tenga instalado lo siguiente:
 
 ---
 
-## 🐍 Paso 2: Levantar el Servidor Backend (Flask)
+## Paso 2: Levantar el Servidor Backend (Flask)
 
 1. Abre una terminal/consola y navega a la carpeta `backend` del proyecto:
    ```bash
@@ -53,7 +53,7 @@ Asegúrate de que la nueva máquina tenga instalado lo siguiente:
 
 ---
 
-## 🅰️ Paso 3: Levantar la Interfaz Frontend (Angular)
+## Paso 3: Levantar la Interfaz Frontend (Angular)
 
 1. Abre una **nueva terminal** (dejando la del backend abierta) y navega a la carpeta `frontend`:
    ```bash
@@ -73,7 +73,7 @@ Asegúrate de que la nueva máquina tenga instalado lo siguiente:
 
 ---
 
-## 🚀 Paso 4: Inicialización de Datos (Primer Ingreso)
+## Paso 4: Inicialización de Datos (Primer Ingreso)
 
 1. Al abrir `http://localhost:4200`, el navegador te redirigirá a la pantalla de **Login**.
 2. Selecciona la pestaña **"Administrador"** (las credenciales se auto-completarán con usuario: `admin` y contraseña: `admin123`).
@@ -83,7 +83,7 @@ Asegúrate de que la nueva máquina tenga instalado lo siguiente:
 
 ---
 
-## 🔑 Credenciales para la Demostración en Clase
+## Credenciales para la Demostración en Clase
 
 Puedes utilizar los siguientes perfiles precargados para demostrar los flujos en clase:
 
