@@ -25,21 +25,13 @@ export class LoginComponent {
   setRole(selectedRole: 'admin' | 'gerente' | 'proveedor'): void {
     this.role = selectedRole;
     this.mensajeError = null;
-    // Pre-llenar credenciales para fácil prueba/revisión por el usuario
-    if (selectedRole === 'admin') {
-      this.username = 'admin';
-      this.password = 'admin123';
-    } else if (selectedRole === 'gerente') {
-      this.username = 'adrian_basilica';
-      this.password = '1234';
-    } else {
-      this.username = 'proveedor';
-      this.password = 'prove123';
-    }
+    // Limpiar campos al cambiar de pestaña de rol
+    this.username = '';
+    this.password = '';
   }
 
   ngOnInit(): void {
-    // Inicializar pre-llenado
+    // Inicializar vacío
     this.setRole('admin');
   }
 
