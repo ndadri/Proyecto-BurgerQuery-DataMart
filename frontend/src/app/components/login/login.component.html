@@ -25,6 +25,13 @@
         (click)="setRole('gerente')">
         <i class="icon-user" style="margin-right: 0.25rem;"></i> Gerente
       </button>
+      <button 
+        type="button" 
+        class="tab-btn" 
+        [class.active]="role === 'proveedor'" 
+        (click)="setRole('proveedor')">
+        <i class="icon-inventory" style="margin-right: 0.25rem;"></i> Proveedor
+      </button>
     </div>
 
     <main class="login-body">

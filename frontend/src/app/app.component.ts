@@ -62,6 +62,9 @@ export class AppComponent implements OnInit {
     if (s.role === 'admin') {
       return 'Administrador';
     }
+    if (s.role === 'proveedor') {
+      return 'Proveedor';
+    }
     return `${s.name} (${s.nombreSucursal})`;
   }
 

@@ -43,8 +43,22 @@ def login():
                 'token': f"gerente-{personal.PersonalKey}-token"
             }), 200
 
+        elif role == 'proveedor':
+            # Autenticación del proveedor
+            if username == 'proveedor' and password == 'prove123':
+                return jsonify({
+                    'role': 'proveedor',
+                    'username': 'proveedor',
+                    'name': 'Proveedor Principal',
+                    'sucursalKey': None,
+                    'nombreSucursal': None,
+                    'token': 'proveedor-session-token'
+                }), 200
+            else:
+                return jsonify({'error': 'No autorizado', 'message': 'Credenciales de proveedor incorrectas.'}), 401
+
         else:
-            return jsonify({'error': 'Rol inválido', 'message': 'El rol debe ser admin o gerente.'}), 400
+            return jsonify({'error': 'Rol inválido', 'message': 'El rol debe ser admin, gerente o proveedor.'}), 400
 
     except Exception as e:
         return jsonify({'error': 'Error de autenticación', 'message': str(e)}), 500

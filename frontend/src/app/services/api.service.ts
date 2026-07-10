@@ -77,4 +77,16 @@ export class ApiService {
   getPersonal(): Observable<DimPersonal[]> {
     return this.http.get<DimPersonal[]>(`${this.baseUrl}/personal`);
   }
+
+  getAllStocks(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/dimensiones/stock/all`);
+  }
+
+  supplyStock(sucursalKey: number, productoKey: number, cantidad: number): Observable<{ message: string; stock: number }> {
+    return this.http.post<{ message: string; stock: number }>(`${this.baseUrl}/dimensiones/stock/supply`, {
+      sucursalKey,
+      productoKey,
+      cantidad
+    });
+  }
 }

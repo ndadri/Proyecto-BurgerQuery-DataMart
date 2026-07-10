@@ -112,7 +112,7 @@ export interface DimPersonal {
 }
 
 export interface SessionInfo {
-  role: 'admin' | 'gerente';
+  role: 'admin' | 'gerente' | 'proveedor';
   username: string;
   name: string;
   sucursalKey: number | null;

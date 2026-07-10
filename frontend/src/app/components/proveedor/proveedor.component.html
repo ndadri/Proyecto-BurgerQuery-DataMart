@@ -1,0 +1,151 @@
+<div class="proveedor-container animate-fade-in">
+  
+  <!-- Cabecera Principal -->
+  <header class="proveedor-header glass-card">
+    <div class="header-info">
+      <h1 class="gradient-text"><i class="icon-inventory"></i> Panel de Proveedor</h1>
+      <p class="header-subtitle">Control de Abastecimiento e Inventario Centralizado (Quito)</p>
+    </div>
+    <div class="header-actions">
+      <span class="badge info-badge">
+        <i class="icon-user"></i> Proveedor Principal
+      </span>
+    </div>
+  </header>
+
+  <!-- Mensajes de Estado -->
+  @if (mensajeExito) {
+    <div class="alert alert-success animate-fade-in">
+      <strong>¡Éxito!</strong> {{ mensajeExito }}
+    </div>
+  }
+
+  @if (mensajeError) {
+    <div class="alert alert-danger animate-fade-in">
+      <strong>Error:</strong> {{ mensajeError }}
+    </div>
+  }
+
+  <!-- Layout Principal -->
+  <div class="main-layout">
+    
+    <!-- Columna Izquierda: Tabla de Stock Completa -->
+    <div class="analytics-col">
+      <div class="glass-card table-card">
+        <div class="card-header-flex">
+          <h3>Inventario Actual por Sucursal</h3>
+          <button class="btn btn-secondary btn-small" (click)="cargarDatos()" [disabled]="cargando">
+            <i class="icon-analytics"></i> Actualizar Tabla
+          </button>
+        </div>
+        
+        @if (cargando) {
+          <div class="loader-container">
+            <div class="spinner"></div>
+            <p>Consultando stock en tiempo real...</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Sucursal</th>
+                  <th>Producto</th>
+                  <th>Categoría</th>
+                  <th class="text-right">Stock</th>
+                  <th class="text-center" style="width: 120px;">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of stocks; track item.sucursalKey + '_' + item.productoKey) {
+                  <tr>
+                    <td><strong>{{ item.nombreSucursal }}</strong></td>
+                    <td>{{ item.nombreProducto }}</td>
+                    <td><span class="category-tag">{{ item.categoria }}</span></td>
+                    <td class="text-right font-semibold" [ngClass]="{
+                      'text-danger': item.stock <= 20,
+                      'text-warning': item.stock > 20 && item.stock <= 80,
+                      'text-success': item.stock > 80
+                    }">
+                      {{ item.stock }} uds
+                    </td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="{
+                        'badge-danger': item.stock <= 20,
+                        'badge-warning': item.stock > 20 && item.stock <= 80,
+                        'badge-success': item.stock > 80
+                      }">
+                        {{ item.stock <= 20 ? 'Crítico' : (item.stock <= 80 ? 'Moderado' : 'Óptimo') }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="text-center text-muted" style="padding: 3rem 0;">
+                      No se encontraron registros de stock. Inicialice la base de datos primero.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Columna Derecha: Formulario de Envío de Mercadería -->
+    <div class="billing-col">
+      <div class="glass-card form-card">
+        <header class="card-header">
+          <h3><i class="icon-receipt"></i> Abastecer Sucursal</h3>
+          <p class="subtitle">Registrar envío de insumos a bodega</p>
+        </header>
+
+        <form (ngSubmit)="enviarStockSubmit()" #supplyForm="ngForm" class="supply-form">
+          <!-- Seleccionar Sucursal -->
+          <div class="form-group">
+            <label for="sucursalSelect"><i class="icon-shop"></i> Sucursal Destino *</label>
+            <select id="sucursalSelect" name="sucursalSelect" [(ngModel)]="sucursalKeySelected" required class="form-control">
+              <option [ngValue]="null" disabled selected>Seleccione una Sucursal</option>
+              @for (suc of sucursales; track suc.SucursalKey) {
+                <option [value]="suc.SucursalKey">
+                  {{ suc.NombreSucursal }} ({{ suc.Ciudad }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <!-- Seleccionar Producto -->
+          <div class="form-group">
+            <label for="productoSelect"><i class="icon-burger"></i> Producto a Enviar *</label>
+            <select id="productoSelect" name="productoSelect" [(ngModel)]="productoKeySelected" required class="form-control">
+              <option [ngValue]="null" disabled selected>Seleccione un Producto</option>
+              @for (prod of productos; track prod.ProductoKey) {
+                <option [value]="prod.ProductoKey">
+                  {{ prod.Nombre }} ({{ prod.Categoria }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <!-- Cantidad a enviar -->
+          <div class="form-group">
+            <label for="cantidadInput"><i class="icon-inventory"></i> Cantidad a Enviar *</label>
+            <input type="number" id="cantidadInput" name="cantidadInput" [(ngModel)]="cantidadToSend" min="1" placeholder="Ej: 50" required class="form-control">
+            <small class="help-text">La cantidad ingresada se sumará al inventario actual.</small>
+          </div>
+
+          <!-- Botón de Envío -->
+          <button type="submit" class="btn btn-accent btn-block" [disabled]="enviando || !supplyForm.form.valid">
+            @if (enviando) {
+              <span class="spinner-small" style="margin-right: 0.5rem;"></span> Enviando Carga...
+            } @else {
+              <i class="icon-save" style="margin-right: 0.25rem;"></i> Despachar Insumos
+            }
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
