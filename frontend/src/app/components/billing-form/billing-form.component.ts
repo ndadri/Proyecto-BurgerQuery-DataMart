@@ -41,7 +41,7 @@ export class BillingFormComponent implements OnInit {
     if (sessionStr) {
       try {
         this.session = JSON.parse(sessionStr) as SessionInfo;
-        if (this.session && this.session.role === 'vendedor') {
+        if (this.session && this.session.role === 'gerente') {
           this.sucursalKey = this.session.sucursalKey;
         }
       } catch (e) {

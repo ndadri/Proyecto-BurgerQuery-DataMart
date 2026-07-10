@@ -107,10 +107,10 @@ INSERT INTO "Dim_Cliente" ("ClienteID", "NombreCompleto", "TipoCliente") VALUES
 (205, 'Consumidor Final', 'General');
 
 INSERT INTO "Dim_Sucursal" ("SucursalID", "NombreSucursal", "Ciudad") VALUES
-(301, 'Sucursal Centro', 'San José'),
-(302, 'Sucursal Plaza Este', 'San José'),
-(303, 'Sucursal Norte', 'Alajuela'),
-(304, 'Sucursal Playas', 'Puntarenas');
+(301, 'Sucursal La Basílica', 'Quito'),
+(302, 'Sucursal Cumbayá', 'Quito'),
+(303, 'Sucursal La Carolina', 'Quito'),
+(304, 'Sucursal Solanda', 'Quito');
 
 INSERT INTO "Dim_Tiempo" ("TiempoKey", "Fecha", "Dia", "Mes", "NombreMes", "Anio", "Trimestre") VALUES
 (20260701, '2026-07-01', 1, 7, 'Julio', 2026, 3),
@@ -165,17 +165,17 @@ INSERT INTO "Fact_Ventas" ("TiempoKey", "ProductoKey", "ClienteKey", "SucursalKe
 -- ==========================================
 
 INSERT INTO "Stock_Sucursal" ("SucursalKey", "ProductoKey", "Stock") VALUES
--- Producto 1 (Hamburguesa Doble Queso - Total: 150): Centro=60, Plaza Este=45, Norte=30, Playas=15
+-- Producto 1 (Hamburguesa Doble Queso - Total: 150): La Basílica=60, Cumbayá=45, La Carolina=30, Solanda=15
 (1, 1, 60), (2, 1, 45), (3, 1, 30), (4, 1, 15),
--- Producto 2 (Hamburguesa de Pollo Crispy - Total: 120): Centro=48, Plaza Este=36, Norte=24, Playas=12
+-- Producto 2 (Hamburguesa de Pollo Crispy - Total: 120): La Basílica=48, Cumbayá=36, La Carolina=24, Solanda=12
 (1, 2, 48), (2, 2, 36), (3, 2, 24), (4, 2, 12),
--- Producto 3 (Papas Fritas Medianas - Total: 300): Centro=120, Plaza Este=90, Norte=60, Playas=30
+-- Producto 3 (Papas Fritas Medianas - Total: 300): La Basílica=120, Cumbayá=90, La Carolina=60, Solanda=30
 (1, 3, 120), (2, 3, 90), (3, 3, 60), (4, 3, 30),
--- Producto 4 (Nuggets de Pollo - Total: 200): Centro=80, Plaza Este=60, Norte=40, Playas=20
+-- Producto 4 (Nuggets de Pollo - Total: 200): La Basílica=80, Cumbayá=60, La Carolina=40, Solanda=20
 (1, 4, 80), (2, 4, 60), (3, 4, 40), (4, 4, 20),
--- Producto 5 (Refresco de Cola Grande - Total: 500): Centro=200, Plaza Este=150, Norte=100, Playas=50
+-- Producto 5 (Refresco de Cola Grande - Total: 500): La Basílica=200, Cumbayá=150, La Carolina=100, Solanda=50
 (1, 5, 200), (2, 5, 150), (3, 5, 100), (4, 5, 50),
--- Producto 6 (Malteada de Vainilla - Total: 80): Centro=32, Plaza Este=24, Norte=16, Playas=8
+-- Producto 6 (Malteada de Vainilla - Total: 80): La Basílica=32, Cumbayá=24, La Carolina=16, Solanda=8
 (1, 6, 32), (2, 6, 24), (3, 6, 16), (4, 6, 8);
 
 
@@ -184,6 +184,8 @@ INSERT INTO "Stock_Sucursal" ("SucursalKey", "ProductoKey", "Stock") VALUES
 -- ==========================================
 
 INSERT INTO "Dim_Personal" ("Nombre", "Apellido", "Usuario", "Contrasena", "SucursalKey") VALUES
-('Juan', 'Pérez', 'juan_centro', '1234', 1),
-('María', 'Gómez', 'maria_playas', '5678', 4);
+('Adrian', 'Falcones', 'adrian_basilica', '1234', 1),
+('Anderson', 'Soto', 'anderson_cumbaya', '1234', 2),
+('Martin', 'Rodriguez', 'martin_carolina', '1234', 3),
+('Andres', 'Ortiz', 'andres_solanda', '1234', 4);
 

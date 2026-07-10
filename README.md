@@ -90,11 +90,11 @@ Puedes utilizar los siguientes perfiles precargados para demostrar los flujos en
 | Rol | Usuario | Contraseña | Sucursal Asignada | Comportamiento en la Demo |
 | :--- | :--- | :--- | :--- | :--- |
 | **Administrador** | `admin` | `admin123` | *Acceso Global* | Acceso completo a todas las sucursales, visualización global y el botón **"Crear Personal"** en el navbar. |
-| **Vendedor (Sede Centro)** | `juan_centro` | `1234` | Sucursal Centro | Vistas analíticas y stock bloqueados a la sede Centro. Formulario de facturación rápida deshabilitado y fijo en la sede Centro. |
-| **Vendedor (Sede Playas)** | `maria_playas` | `5678` | Sucursal Playas | Vistas analíticas y stock bloqueados a la sede Playas. Factura únicamente a la sede Playas. |
+| **Gerente (La Basílica)** | `adrian_basilica` | `1234` | Sucursal La Basílica | Vistas analíticas y stock bloqueados a la sede La Basílica. Formulario de facturación rápida deshabilitado y fijo en la sede La Basílica. |
+| **Gerente (Solanda)** | `andres_solanda` | `1234` | Sucursal Solanda | Vistas analíticas y stock bloqueados a la sede Solanda. Factura únicamente a la sede Solanda. |
 
 ### Flujos Recomendados para Presentar:
-1. **Flujo de Admin (Creación)**: Inicia como Admin, abre el modal de personal y crea un vendedor asignado a la "Sucursal Norte" (ej. usuario: `carlos_norte`, clave: `123`).
-2. **Flujo de Vendedor (Seguridad/Filtros)**: Cierra sesión e ingresa con `juan_centro` o el vendedor que acabas de crear. Muestra cómo todo el dashboard se restringe a su sucursal de forma automática y segura.
-3. **Flujo de Stock por Sucursal (Trigger)**: Registra una venta en el formulario de facturación rápida como vendedor y muestra cómo se descuenta el stock de esa sucursal en tiempo real, mientras las demás sucursales conservan intacto su inventario.
+1. **Flujo de Admin (Creación)**: Inicia como Admin, abre el modal de personal y crea un gerente asignado a la "Sucursal La Carolina" (ej. usuario: `carlos_norte`, clave: `123`).
+2. **Flujo de Gerente (Seguridad/Filtros)**: Cierra sesión e ingresa con `adrian_basilica` o el gerente que acabas de crear. Muestra cómo todo el dashboard se restringe a su sucursal de forma automática y segura.
+3. **Flujo de Stock por Sucursal (Trigger)**: Registra una venta en el formulario de facturación rápida como gerente y muestra cómo se descuenta el stock de esa sucursal en tiempo real, mientras las demás sucursales conservan intacto su inventario.
 4. **Flujo de Conciliación (Edición)**: Regresa al administrador, edita esa venta para reasignarla de sucursal, y enseña cómo el backend concilia automáticamente el inventario sumándolo de vuelta a la sucursal de origen y restándolo de la de destino.

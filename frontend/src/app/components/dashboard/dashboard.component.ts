@@ -116,7 +116,7 @@ export class DashboardComponent implements OnInit {
   }
 
   cargarDimensiones(): void {
-    const sucursalKey = (this.session && this.session.role === 'vendedor') ? (this.session.sucursalKey || undefined) : undefined;
+    const sucursalKey = (this.session && this.session.role === 'gerente') ? (this.session.sucursalKey || undefined) : undefined;
     
     this.apiService.getProductos(sucursalKey).subscribe({
       next: (data) => this.productos = data,
@@ -131,8 +131,8 @@ export class DashboardComponent implements OnInit {
     this.apiService.getSucursales().subscribe({
       next: (data) => {
         this.sucursales = data;
-        // Si es vendedor, autoseleccionar su sucursal de la lista
-        if (this.session && this.session.role === 'vendedor') {
+        // Si es gerente, autoseleccionar su sucursal de la lista
+        if (this.session && this.session.role === 'gerente') {
           this.sucursalSeleccionada = this.sucursales.find(s => s.SucursalKey === this.session?.sucursalKey) || null;
         }
       },
@@ -232,9 +232,9 @@ export class DashboardComponent implements OnInit {
     this.cargando = true;
     this.mensajeError = null;
 
-    // Si es vendedor, forzar la sucursal asignada
+    // Si es gerente, forzar la sucursal asignada
     let sucursalKey = this.sucursalSeleccionada?.SucursalKey;
-    if (this.session && this.session.role === 'vendedor') {
+    if (this.session && this.session.role === 'gerente') {
       sucursalKey = this.session.sucursalKey || undefined;
     }
 
@@ -246,8 +246,8 @@ export class DashboardComponent implements OnInit {
         this.reporte = data;
         this.cargando = false;
         
-        // Asegurar sucursal seleccionada para la UI del vendedor
-        if (this.session && this.session.role === 'vendedor' && !this.sucursalSeleccionada && this.sucursales.length > 0) {
+        // Asegurar sucursal seleccionada para la UI del gerente
+        if (this.session && this.session.role === 'gerente' && !this.sucursalSeleccionada && this.sucursales.length > 0) {
           this.sucursalSeleccionada = this.sucursales.find(s => s.SucursalKey === this.session?.sucursalKey) || null;
         }
       },
@@ -260,8 +260,8 @@ export class DashboardComponent implements OnInit {
   }
 
   seleccionarSucursal(sucursal: any): void {
-    if (this.session && this.session.role === 'vendedor') {
-      // El vendedor tiene bloqueado el filtrado de sucursales
+    if (this.session && this.session.role === 'gerente') {
+      // El gerente tiene bloqueado el filtrado de sucursales
       return;
     }
     if (this.sucursalSeleccionada?.SucursalKey === sucursal.SucursalKey) {

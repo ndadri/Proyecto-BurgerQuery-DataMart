@@ -1,26 +1,29 @@
 @if (isLoggedIn()) {
-  <nav class="navbar glass-card">
-    <div class="navbar-brand">
-      <span class="logo-emoji"><i class="icon-burger"></i></span>
-      <span class="logo-text gradient-text">BurgerQuery OLAP</span>
-    </div>
-    <div class="navbar-status" style="display: flex; align-items: center; gap: 0.5rem;">
-      
-      <!-- Botón de Creación de Personal (Solo Admin) -->
-      @if (getSession()?.role === 'admin') {
-        <button class="btn btn-clear-filter" (click)="abrirModalPersonal()" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; margin-right: 0.5rem;">
-          <i class="icon-user"></i> Crear Personal
-        </button>
-      }
+<nav class="navbar glass-card">
+  <div class="navbar-brand">
+    <span class="logo-emoji"><i class="icon-burger"></i></span>
+    <span class="logo-text gradient-text">BurgerQuery</span>
+  </div>
+  <div class="navbar-status" style="display: flex; align-items: center; gap: 0.5rem;">
 
-      <span class="badge info-badge" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 20px;">
-        <i class="icon-user"></i> {{ getSessionName() }}
-      </span>
-      <button class="btn btn-clear-filter" (click)="logout()" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">
-        Salir <i class="icon-close"></i>
-      </button>
-    </div>
-  </nav>
+    <!-- Botón de Creación de Personal (Solo Admin) -->
+    @if (getSession()?.role === 'admin') {
+    <button class="btn btn-clear-filter" (click)="abrirModalPersonal()"
+      style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; margin-right: 0.5rem;">
+      <i class="icon-user"></i> Crear Personal
+    </button>
+    }
+
+    <span class="badge info-badge"
+      style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 20px;">
+      <i class="icon-user"></i> {{ getSessionName() }}
+    </span>
+    <button class="btn btn-clear-filter" (click)="logout()"
+      style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">
+      Salir <i class="icon-close"></i>
+    </button>
+  </div>
+</nav>
 }
 
 <main class="app-main">
@@ -29,84 +32,104 @@
 
 <!-- Modal de Creación de Personal -->
 @if (mostrarModalPersonal) {
-  <div class="modal-overlay animate-fade-in" (click)="cerrarModalPersonal()">
-    <div class="modal-content glass-card" (click)="$event.stopPropagation()" style="max-width: 500px; padding: 2.25rem;">
-      
-      <header class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-        <h2 class="gradient-text" style="font-size: 1.5rem; font-weight: 700; margin: 0;"><i class="icon-user"></i> Registrar Personal de Ventas</h2>
-        <button class="btn-close-modal" (click)="cerrarModalPersonal()" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.25rem; transition: color 0.2s;"><i class="icon-close"></i></button>
-      </header>
+<div class="modal-overlay animate-fade-in" (click)="cerrarModalPersonal()">
+  <div class="modal-content glass-card" (click)="$event.stopPropagation()" style="max-width: 500px; padding: 2.25rem;">
 
-      <main class="modal-body" style="display: flex; flex-direction: column; gap: 1.25rem;">
-        @if (mensajeErrorPersonal) {
-          <div class="alert alert-danger" style="margin-bottom: 0.5rem;">
-            <strong>Error:</strong> {{ mensajeErrorPersonal }}
-          </div>
-        }
-        @if (mensajeExitoPersonal) {
-          <div class="alert alert-success" style="margin-bottom: 0.5rem;">
-            <strong>¡Éxito!</strong> {{ mensajeExitoPersonal }}
-          </div>
-        }
+    <header class="modal-header"
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+      <h2 class="gradient-text" style="font-size: 1.5rem; font-weight: 700; margin: 0;"><i class="icon-user"></i>
+        Registrar Personal de Ventas</h2>
+      <button class="btn-close-modal" (click)="cerrarModalPersonal()"
+        style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.25rem; transition: color 0.2s;"><i
+          class="icon-close"></i></button>
+    </header>
 
-        <form (ngSubmit)="crearPersonalSubmit()" #personalForm="ngForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <!-- Nombre -->
-            <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
-              <label for="pNombre" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i class="icon-user"></i> Nombre *</label>
-              <input id="pNombre" name="pNombre" type="text" [(ngModel)]="personalNombre" required placeholder="Ej: Juan" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
-            </div>
-            
-            <!-- Apellido -->
-            <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
-              <label for="pApellido" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i class="icon-user"></i> Apellido *</label>
-              <input id="pApellido" name="pApellido" type="text" [(ngModel)]="personalApellido" required placeholder="Ej: Pérez" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
-            </div>
-          </div>
+    <main class="modal-body" style="display: flex; flex-direction: column; gap: 1.25rem;">
+      @if (mensajeErrorPersonal) {
+      <div class="alert alert-danger" style="margin-bottom: 0.5rem;">
+        <strong>Error:</strong> {{ mensajeErrorPersonal }}
+      </div>
+      }
+      @if (mensajeExitoPersonal) {
+      <div class="alert alert-success" style="margin-bottom: 0.5rem;">
+        <strong>¡Éxito!</strong> {{ mensajeExitoPersonal }}
+      </div>
+      }
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <!-- Usuario -->
-            <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
-              <label for="pUsuario" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i class="icon-user"></i> Usuario *</label>
-              <input id="pUsuario" name="pUsuario" type="text" [(ngModel)]="personalUsuario" required placeholder="Ej: juan_centro" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
-            </div>
-            
-            <!-- Contrasena -->
-            <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
-              <label for="pContrasena" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i class="icon-receipt"></i> Contraseña *</label>
-              <input id="pContrasena" name="pContrasena" type="password" [(ngModel)]="personalContrasena" required placeholder="PIN o clave" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
-            </div>
-          </div>
+      <form (ngSubmit)="crearPersonalSubmit()" #personalForm="ngForm"
+        style="display: flex; flex-direction: column; gap: 1.25rem;">
 
-          <!-- Sucursal Asignada -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <!-- Nombre -->
           <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
-            <label for="pSucursal" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i class="icon-shop"></i> Sucursal Asignada *</label>
-            <select id="pSucursal" name="pSucursal" [(ngModel)]="personalSucursalKey" required class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit'; font-size: 0.9rem;">
-              <option [ngValue]="null" disabled selected>Seleccione una sucursal</option>
-              @for (suc of sucursales; track suc.SucursalKey) {
-                <option [value]="suc.SucursalKey">{{ suc.NombreSucursal }} ({{ suc.Ciudad }})</option>
-              }
-            </select>
+            <label for="pNombre" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i
+                class="icon-user"></i> Nombre *</label>
+            <input id="pNombre" name="pNombre" type="text" [(ngModel)]="personalNombre" required placeholder="Ej: Juan"
+              class="form-control"
+              style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
           </div>
 
-          <button type="submit" class="btn btn-primary" [disabled]="guardandoPersonal || !personalForm.form.valid" style="width: 100%; padding: 0.75rem; font-weight: 700; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-            @if (guardandoPersonal) {
-              <span class="spinner-small"></span> Registrando...
-            } @else {
-              Registrar Empleado <i class="icon-user"></i>
+          <!-- Apellido -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
+            <label for="pApellido" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i
+                class="icon-user"></i> Apellido *</label>
+            <input id="pApellido" name="pApellido" type="text" [(ngModel)]="personalApellido" required
+              placeholder="Ej: Pérez" class="form-control"
+              style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <!-- Usuario -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
+            <label for="pUsuario" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i
+                class="icon-user"></i> Usuario *</label>
+            <input id="pUsuario" name="pUsuario" type="text" [(ngModel)]="personalUsuario" required
+              placeholder="Ej: juan_centro" class="form-control"
+              style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
+          </div>
+
+          <!-- Contrasena -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
+            <label for="pContrasena" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i
+                class="icon-receipt"></i> Contraseña *</label>
+            <input id="pContrasena" name="pContrasena" type="password" [(ngModel)]="personalContrasena" required
+              placeholder="PIN o clave" class="form-control"
+              style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit';">
+          </div>
+        </div>
+
+        <!-- Sucursal Asignada -->
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
+          <label for="pSucursal" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);"><i
+              class="icon-shop"></i> Sucursal Asignada *</label>
+          <select id="pSucursal" name="pSucursal" [(ngModel)]="personalSucursalKey" required class="form-control"
+            style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.65rem 0.85rem; border-radius: 8px; font-family: 'Outfit'; font-size: 0.9rem;">
+            <option [ngValue]="null" disabled selected>Seleccione una sucursal</option>
+            @for (suc of sucursales; track suc.SucursalKey) {
+            <option [value]="suc.SucursalKey">{{ suc.NombreSucursal }} ({{ suc.Ciudad }})</option>
             }
-          </button>
+          </select>
+        </div>
 
-        </form>
-      </main>
+        <button type="submit" class="btn btn-primary" [disabled]="guardandoPersonal || !personalForm.form.valid"
+          style="width: 100%; padding: 0.75rem; font-weight: 700; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          @if (guardandoPersonal) {
+          <span class="spinner-small"></span> Registrando...
+          } @else {
+          Registrar Empleado <i class="icon-user"></i>
+          }
+        </button>
 
-    </div>
+      </form>
+    </main>
+
   </div>
+</div>
 }
 
 @if (isLoggedIn()) {
-  <footer class="app-footer">
-    <p>&copy; 2026 BurgerQuery_DataMart | Desarrollado en Angular Moderno Standalone & Flask (Roles: Admin & Vendedor)</p>
-  </footer>
+<footer class="app-footer">
+  <p>&copy; 2026 BurgerQuery_DataMart | Desarrollado en Angular Moderno Standalone & Flask (Roles: Admin & Gerente)</p>
+</footer>
 }

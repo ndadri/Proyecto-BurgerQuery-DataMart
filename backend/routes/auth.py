@@ -28,23 +28,23 @@ def login():
             else:
                 return jsonify({'error': 'No autorizado', 'message': 'Credenciales de administrador incorrectas.'}), 401
 
-        elif role == 'vendedor':
-            # Autenticación del vendedor consultando la base de datos
+        elif role == 'gerente' or role == 'vendedor':
+            # Autenticación del gerente/vendedor consultando la base de datos
             personal = DimPersonal.query.filter_by(Usuario=username).first()
             if not personal or personal.Contrasena != password:
-                return jsonify({'error': 'No autorizado', 'message': 'Usuario o contraseña de vendedor incorrectos.'}), 401
+                return jsonify({'error': 'No autorizado', 'message': 'Usuario o contraseña de gerente incorrectos.'}), 401
             
             return jsonify({
-                'role': 'vendedor',
+                'role': 'gerente',
                 'username': personal.Usuario,
                 'name': f"{personal.Nombre} {personal.Apellido}",
                 'sucursalKey': personal.SucursalKey,
                 'nombreSucursal': personal.sucursal.NombreSucursal if personal.sucursal else 'Desconocida',
-                'token': f"vendedor-{personal.PersonalKey}-token"
+                'token': f"gerente-{personal.PersonalKey}-token"
             }), 200
 
         else:
-            return jsonify({'error': 'Rol inválido', 'message': 'El rol debe ser admin o vendedor.'}), 400
+            return jsonify({'error': 'Rol inválido', 'message': 'El rol debe ser admin o gerente.'}), 400
 
     except Exception as e:
         return jsonify({'error': 'Error de autenticación', 'message': str(e)}), 500

@@ -15,14 +15,14 @@ export class LoginComponent {
   private apiService = inject(ApiService);
   private router = inject(Router);
 
-  role: 'admin' | 'vendedor' = 'admin';
+  role: 'admin' | 'gerente' = 'admin';
   username = '';
   password = '';
 
   mensajeError: string | null = null;
   cargando = false;
 
-  setRole(selectedRole: 'admin' | 'vendedor'): void {
+  setRole(selectedRole: 'admin' | 'gerente'): void {
     this.role = selectedRole;
     this.mensajeError = null;
     // Pre-llenar credenciales para fácil prueba/revisión por el usuario
@@ -30,7 +30,7 @@ export class LoginComponent {
       this.username = 'admin';
       this.password = 'admin123';
     } else {
-      this.username = 'juan_centro';
+      this.username = 'adrian_basilica';
       this.password = '1234';
     }
   }
