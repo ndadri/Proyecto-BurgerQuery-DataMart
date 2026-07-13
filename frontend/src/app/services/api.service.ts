@@ -43,7 +43,18 @@ export class ApiService {
     return this.http.put<{ message: string; venta: any }>(`${this.baseUrl}/ventas/${ventaId}`, payload);
   }
 
-  getReporteOlap(sucursalKey?: number, diaSemana?: number, hora?: number): Observable<DashboardReport> {
+  getReporteOlap(
+    sucursalKey?: number,
+    diaSemana?: number,
+    hora?: number,
+    categoria?: string,
+    fecha?: string,
+    productoKey?: number,
+    clienteKey?: number,
+    ventaId?: number,
+    fechaInicio?: string,
+    fechaFin?: string
+  ): Observable<DashboardReport> {
     let url = `${this.baseUrl}/ventas/reporte`;
     const params: string[] = [];
     if (sucursalKey !== undefined && sucursalKey !== null) {
@@ -54,6 +65,27 @@ export class ApiService {
     }
     if (hora !== undefined && hora !== null) {
       params.push(`hora=${hora}`);
+    }
+    if (categoria !== undefined && categoria !== null && categoria !== '') {
+      params.push(`categoria=${encodeURIComponent(categoria)}`);
+    }
+    if (fecha !== undefined && fecha !== null && fecha !== '') {
+      params.push(`fecha=${encodeURIComponent(fecha)}`);
+    }
+    if (productoKey !== undefined && productoKey !== null) {
+      params.push(`productoKey=${productoKey}`);
+    }
+    if (clienteKey !== undefined && clienteKey !== null) {
+      params.push(`clienteKey=${clienteKey}`);
+    }
+    if (ventaId !== undefined && ventaId !== null) {
+      params.push(`ventaId=${ventaId}`);
+    }
+    if (fechaInicio !== undefined && fechaInicio !== null && fechaInicio !== '') {
+      params.push(`fechaInicio=${encodeURIComponent(fechaInicio)}`);
+    }
+    if (fechaFin !== undefined && fechaFin !== null && fechaFin !== '') {
+      params.push(`fechaFin=${encodeURIComponent(fechaFin)}`);
     }
     if (params.length > 0) {
       url += `?${params.join('&')}`;
@@ -82,11 +114,23 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/dimensiones/stock/all`);
   }
 
-  supplyStock(sucursalKey: number, productoKey: number, cantidad: number): Observable<{ message: string; stock: number }> {
+  supplyStock(sucursalKey: number, productoKey: number, cantidad: number, lote?: string, fechaCaducidad?: string): Observable<{ message: string; stock: number }> {
     return this.http.post<{ message: string; stock: number }>(`${this.baseUrl}/dimensiones/stock/supply`, {
       sucursalKey,
       productoKey,
-      cantidad
+      cantidad,
+      lote,
+      fechaCaducidad
+    });
+  }
+
+  applyStockDiscount(sucursalKey: number, productoKey: number, lote: string, descuentoPorcentaje: number, role: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/dimensiones/stock/discount`, {
+      sucursalKey,
+      productoKey,
+      lote,
+      descuentoPorcentaje,
+      role
     });
   }
 }

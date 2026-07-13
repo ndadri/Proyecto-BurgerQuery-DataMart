@@ -78,13 +78,40 @@ export class BillingFormComponent implements OnInit {
   onSucursalChange(): void {
     const sucursalId = this.sucursalKey ? Number(this.sucursalKey) : undefined;
     this.apiService.getProductos(sucursalId).subscribe({
-      next: (data) => this.productos = data,
+      next: (data) => {
+        this.productos = data;
+        // Resetear descuento por si cambia de sucursal
+        this.productoKey = null;
+        this.descuento = 0.00;
+      },
       error: (err) => this.mensajeError = 'Error al cargar productos: ' + (err.error?.message || err.message)
     });
   }
 
+  onProductoChange(): void {
+    this.calcularDescuentoCaducidad();
+  }
+
+  onCantidadChange(): void {
+    this.calcularDescuentoCaducidad();
+  }
+
+  calcularDescuentoCaducidad(): void {
+    const prod = this.productoSeleccionado as any;
+    if (prod && prod.DescuentoPorcentaje > 0) {
+      const descMonto = (prod.PrecioUnitario * this.cantidad * prod.DescuentoPorcentaje) / 100;
+      this.descuento = Number(descMonto.toFixed(2));
+    } else {
+      this.descuento = 0.00;
+    }
+  }
+
   get productoSeleccionado(): DimProducto | undefined {
     return this.productos.find(p => p.ProductoKey === Number(this.productoKey));
+  }
+
+  get productoSeleccionadoConDescuento(): any {
+    return this.productoSeleccionado;
   }
 
   get subtotal(): number {

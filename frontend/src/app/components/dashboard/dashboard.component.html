@@ -33,14 +33,89 @@
   </div>
   }
 
+  <!-- Panel de Filtros Globales (Fecha Inicio y Fin) -->
+  <div class="glass-card global-filters-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <div class="card-title-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+      <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
+        <i class="fa-solid fa-calendar-days" style="color: var(--primary-color); font-size: 1.2rem;"></i> Rango de Fechas del Análisis OLAP
+      </h3>
+      <span class="badge info-badge" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 12px;">Análisis de Periodos</span>
+    </div>
+    <p class="description-text" style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+      Filtra simultáneamente todos los paneles analíticos (KPIs, mapa de calor, listado de transacciones, inventarios y tendencias) seleccionando un rango de fechas.
+    </p>
+    
+    <div class="filters-row" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+      <!-- Fecha Inicio -->
+      <div class="filter-input-group" style="display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 180px;">
+        <label for="fechaInicioFilter" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem;">
+          <span style="color: #10b981;">●</span> Fecha de Inicio
+        </label>
+        <input 
+          type="date" 
+          id="fechaInicioFilter" 
+          [value]="fechaInicioSeleccionada"
+          (change)="onFechaInicioChange($event)"
+          class="global-date-picker-input"
+        >
+      </div>
+
+      <!-- Fecha Fin -->
+      <div class="filter-input-group" style="display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 180px;">
+        <label for="fechaFinFilter" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem;">
+          <span style="color: #ef4444;">●</span> Fecha de Fin
+        </label>
+        <input 
+          type="date" 
+          id="fechaFinFilter" 
+          [value]="fechaFinSeleccionada"
+          (change)="onFechaFinChange($event)"
+          class="global-date-picker-input"
+        >
+      </div>
+      
+      <!-- Botón Limpiar Rápido -->
+      @if (fechaInicioSeleccionada || fechaFinSeleccionada) {
+        <div style="display: flex; align-items: flex-end;">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="fechaInicioSeleccionada = null; fechaFinSeleccionada = null; cargarDatos()"
+            style="height: 42px; display: inline-flex; align-items: center; gap: 0.5rem;"
+          >
+            <i class="icon-close"></i> Limpiar Fechas
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
   <!-- Filtros Activos -->
-  @if (sucursalSeleccionada || diaSemanaSeleccionado || horaSeleccionada !== null) {
+  @if (sucursalSeleccionada || diaSemanaSeleccionado || horaSeleccionada !== null || categoriaSeleccionada || ventaSeleccionadaId || fechaSeleccionada || clienteSeleccionado || productoSeleccionado || fechaInicioSeleccionada || fechaFinSeleccionada) {
   <div class="filter-banner glass-card animate-fade-in" style="margin-bottom: 1.5rem;">
     <div class="filter-info" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <i class="icon-analytics"></i>
         <span style="font-weight: 700;">Filtros activos:</span>
       </div>
+
+      @if (fechaInicioSeleccionada) {
+      <span class="badge info-badge"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+        Desde: {{ fechaInicioSeleccionada }}
+        <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
+          (click)="fechaInicioSeleccionada = null; cargarDatos()" title="Quitar filtro de fecha inicio"></i>
+      </span>
+      }
+
+      @if (fechaFinSeleccionada) {
+      <span class="badge info-badge"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+        Hasta: {{ fechaFinSeleccionada }}
+        <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
+          (click)="fechaFinSeleccionada = null; cargarDatos()" title="Quitar filtro de fecha fin"></i>
+      </span>
+      }
 
       @if (sucursalSeleccionada) {
       <span class="badge info-badge"
@@ -60,6 +135,51 @@
         }
         <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
           (click)="limpiarFiltroTemporal()" title="Quitar filtro de tiempo"></i>
+      </span>
+      }
+
+      @if (categoriaSeleccionada) {
+      <span class="badge info-badge"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+        Categoría: {{ categoriaSeleccionada }}
+        <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
+          (click)="categoriaSeleccionada = null; cargarDatos()" title="Quitar filtro de categoría"></i>
+      </span>
+      }
+
+      @if (ventaSeleccionadaId) {
+      <span class="badge info-badge"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+        Transacción: #{{ ventaSeleccionadaId }}
+        <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
+          (click)="ventaSeleccionadaId = null; cargarDatos()" title="Quitar filtro de transacción"></i>
+      </span>
+      }
+
+      @if (fechaSeleccionada) {
+      <span class="badge info-badge"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+        Fecha: {{ fechaSeleccionada }}
+        <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
+          (click)="fechaSeleccionada = null; cargarDatos()" title="Quitar filtro de fecha"></i>
+      </span>
+      }
+
+      @if (clienteSeleccionado) {
+      <span class="badge info-badge"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+        Cliente: {{ clienteSeleccionado.NombreCompleto }}
+        <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
+          (click)="clienteSeleccionado = null; cargarDatos()" title="Quitar filtro de cliente"></i>
+      </span>
+      }
+
+      @if (productoSeleccionado) {
+      <span class="badge info-badge"
+        style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.35rem 0.75rem; border-radius: 20px;">
+        Producto: {{ productoSeleccionado.Nombre }}
+        <i class="icon-close" style="cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 0.25rem;"
+          (click)="productoSeleccionado = null; cargarDatos()" title="Quitar filtro de producto"></i>
       </span>
       }
     </div>
@@ -126,34 +246,113 @@
       <!-- Grid de Reportes de Dimensión -->
       <div class="charts-grid">
         <!-- Ventas por Categoría -->
-        <div class="glass-card table-card">
-          <h3>Ventas por Categoría{{ sucursalSeleccionada ? ' (' + sucursalSeleccionada.NombreSucursal + ')' : '' }}{{
-            diaSemanaSeleccionado ? ' - ' + obtenerNombreDia(diaSemanaSeleccionado) : '' }}{{ horaSeleccionada !== null
-            ? ' a las ' + horaSeleccionada + ':00' : '' }}</h3>
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Categoría</th>
-                  <th>Cant. Vendida</th>
-                  <th class="text-right">Monto Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (cat of reporte.ventas_categoria; track cat.Categoria) {
-                <tr>
-                  <td><strong>{{ cat.Categoria }}</strong></td>
-                  <td>{{ cat.cantidad }} uds</td>
-                  <td class="text-right font-semibold">${{ cat.total | number:'1.2-2' }}</td>
-                </tr>
-                } @empty {
-                <tr>
-                  <td colspan="3" class="text-center text-muted">No hay datos de categorías registrados.</td>
-                </tr>
+        <div class="glass-card table-card category-card">
+          <div class="card-header-flex">
+            <h3>Ventas por Categoría{{ sucursalSeleccionada ? ' (' + sucursalSeleccionada.NombreSucursal + ')' : '' }}{{
+              diaSemanaSeleccionado ? ' - ' + obtenerNombreDia(diaSemanaSeleccionado) : '' }}{{ horaSeleccionada !== null
+              ? ' a las ' + horaSeleccionada + ':00' : '' }}</h3>
+            <div class="card-actions">
+              <button class="btn btn-secondary btn-xs" (click)="vistaGrafico = !vistaGrafico" [title]="vistaGrafico ? 'Ver como Tabla' : 'Ver como Gráfico'">
+                @if (vistaGrafico) {
+                  <i class="fa-solid fa-list-ul"></i> Tabla
+                } @else {
+                  <i class="fa-solid fa-chart-pie"></i> Gráfico
                 }
-              </tbody>
-            </table>
+              </button>
+            </div>
           </div>
+
+          @if (vistaGrafico) {
+            <div class="donut-chart-container">
+              <div class="donut-chart-svg-wrapper">
+                <svg viewBox="0 0 120 120" class="donut-svg">
+                  <!-- Base track circle -->
+                  <circle cx="60" cy="60" r="40" fill="transparent" stroke="rgba(255, 255, 255, 0.03)" stroke-width="12"></circle>
+                  
+                  <!-- Wedges circles -->
+                  @for (slice of slices; track slice.Categoria) {
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="40"
+                      fill="transparent"
+                      [attr.stroke]="slice.color"
+                      stroke-width="12"
+                      [attr.stroke-dasharray]="slice.strokeDashArray"
+                      [attr.stroke-dashoffset]="slice.strokeDashOffset"
+                      class="donut-segment"
+                      [class.active-segment]="categoriaSeleccionada === slice.Categoria"
+                      (click)="seleccionarCategoria(slice.Categoria)"
+                      [title]="slice.Categoria + ': ' + (slice.porcentaje | number:'1.1-1') + '% ($' + (slice.total | number:'1.2-2') + ')'"
+                    >
+                    </circle>
+                  }
+                </svg>
+                <!-- Central Text showing Total Sales or filtered sales -->
+                <div class="donut-center-text">
+                  <span class="donut-center-label">{{ categoriaSeleccionada ? 'Filtro' : 'Total' }}</span>
+                  <span class="donut-center-value">
+                    @if (categoriaSeleccionada) {
+                      {{ categoriaSeleccionada }}
+                    } @else {
+                      ${{ (reporte.kpis.total_ventas) | number:'1.0-0' }}
+                    }
+                  </span>
+                </div>
+              </div>
+
+              <!-- Side Legend list -->
+              <div class="donut-legend">
+                @for (slice of slices; track slice.Categoria) {
+                  <div 
+                    class="legend-item clickable-legend-item" 
+                    [class.selected-legend]="categoriaSeleccionada === slice.Categoria"
+                    (click)="seleccionarCategoria(slice.Categoria)"
+                  >
+                    <span class="legend-color-dot" [style.background-color]="slice.color"></span>
+                    <span class="legend-name" [style.color]="categoriaSeleccionada === slice.Categoria ? slice.color : ''">
+                      {{ slice.Categoria }}
+                    </span>
+                    <span class="legend-stats">
+                      <span class="legend-percent">{{ slice.porcentaje | number:'1.1-1' }}%</span>
+                      <span class="legend-value">${{ slice.total | number:'1.2-2' }}</span>
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <!-- Table View -->
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Categoría</th>
+                    <th>Cant. Vendida</th>
+                    <th class="text-right">Monto Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (cat of reporte.ventas_categoria; track cat.Categoria) {
+                  <tr (click)="seleccionarCategoria(cat.Categoria)"
+                      [class.selected-row]="categoriaSeleccionada === cat.Categoria" 
+                      class="clickable-row">
+                    <td>
+                      <span class="legend-color-dot inline-dot" [style.background-color]="obtenerColorCategoria(cat.Categoria)"></span>
+                      <strong>{{ cat.Categoria }}</strong>
+                    </td>
+                    <td>{{ cat.cantidad }} uds</td>
+                    <td class="text-right font-semibold">${{ cat.total | number:'1.2-2' }}</td>
+                  </tr>
+                  } @empty {
+                  <tr>
+                    <td colspan="3" class="text-center text-muted">No hay datos de categorías registrados.</td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         </div>
 
         <!-- Ventas por Sucursal -->
@@ -311,13 +510,23 @@
             </thead>
             <tbody>
               @for (venta of reporte.ultimas_ventas; track venta.VentaID) {
-              <tr>
-                <td><code>#{{ venta.VentaID }}</code></td>
-                <td>{{ venta.Tiempo?.Fecha }}</td>
-                <td>{{ venta.Cliente?.NombreCompleto }}</td>
-                <td>{{ venta.Producto?.Nombre }}</td>
+              <tr [class.highlighted-row]="ventaSeleccionadaId === venta.VentaID">
+                <td (click)="seleccionarVenta(venta.VentaID)" class="clickable-cell" [class.selected-cell]="ventaSeleccionadaId === venta.VentaID" title="Filtrar por esta venta">
+                  <code>#{{ venta.VentaID }}</code>
+                </td>
+                <td (click)="seleccionarFecha(venta.Tiempo?.Fecha)" class="clickable-cell" [class.selected-cell]="fechaSeleccionada === venta.Tiempo?.Fecha" title="Filtrar por esta fecha">
+                  {{ venta.Tiempo?.Fecha }}
+                </td>
+                <td (click)="seleccionarCliente(venta.Cliente)" class="clickable-cell" [class.selected-cell]="clienteSeleccionado?.ClienteKey === venta.ClienteKey" title="Filtrar por este cliente">
+                  {{ venta.Cliente?.NombreCompleto }}
+                </td>
+                <td (click)="seleccionarProducto(venta.Producto)" class="clickable-cell" [class.selected-cell]="productoSeleccionado?.ProductoKey === venta.ProductoKey" title="Filtrar por este producto">
+                  {{ venta.Producto?.Nombre }}
+                </td>
                 <td>{{ venta.Cantidad }}</td>
-                <td>{{ venta.Sucursal?.NombreSucursal }}</td>
+                <td (click)="seleccionarSucursal(venta.Sucursal)" class="clickable-cell" [class.selected-cell]="sucursalSeleccionada?.SucursalKey === venta.SucursalKey" title="Filtrar por esta sucursal">
+                  {{ venta.Sucursal?.NombreSucursal }}
+                </td>
                 <td class="text-right font-semibold color-accent">${{ venta.MontoTotal | number:'1.2-2' }}</td>
                 <td class="text-center">
                   <button class="btn btn-action-edit" (click)="abrirModalEdicion(venta)" title="Editar Venta">
@@ -337,11 +546,187 @@
         </div>
       </div>
 
+      <!-- Gráfico de Tendencias Mensuales -->
+      <div class="glass-card trend-card" style="margin-top: 1.25rem;">
+        <div class="card-title-container">
+          <h3><i class="fa-solid fa-chart-line"></i> Tendencia de Ventas Mensuales{{ sucursalSeleccionada ? ' (' +
+            sucursalSeleccionada.NombreSucursal + ')' : '' }}{{ categoriaSeleccionada ? ' - ' +
+            categoriaSeleccionada : '' }}{{ productoSeleccionado ? ' - ' + productoSeleccionado.Nombre : '' }}</h3>
+          <span class="badge info-badge">Evolución OLAP</span>
+        </div>
+        <p class="description-text">
+          Visualiza el historial acumulado de facturación mes a mes para detectar estacionalidad y crecimiento.
+        </p>
+
+        <div class="line-chart-wrapper">
+          <div class="line-chart-svg-container">
+            <svg viewBox="0 0 500 150" class="line-svg">
+              <defs>
+                <!-- Line gradient -->
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#3b82f6" />
+                  <stop offset="50%" stop-color="#8b5cf6" />
+                  <stop offset="100%" stop-color="#f59e0b" />
+                </linearGradient>
+                
+                <!-- Area gradient -->
+                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.25" />
+                  <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Horizontal Grid Lines -->
+              <!-- Top Grid line -->
+              <line x1="50" y1="20" x2="480" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="4,4"></line>
+              <text x="45" y="24" fill="var(--text-muted)" font-size="8" text-anchor="end">${{ trendMaxVal | number:'1.0-0' }}</text>
+
+              <!-- Middle Grid line -->
+              <line x1="50" y1="70" x2="480" y2="70" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="4,4"></line>
+              <text x="45" y="74" fill="var(--text-muted)" font-size="8" text-anchor="end">${{ (trendMaxVal / 2) | number:'1.0-0' }}</text>
+
+              <!-- Bottom Grid line -->
+              <line x1="50" y1="120" x2="480" y2="120" stroke="rgba(255,255,255,0.08)" stroke-width="1"></line>
+              <text x="45" y="124" fill="var(--text-muted)" font-size="8" text-anchor="end">$0</text>
+
+              @if (trendPoints.length > 0) {
+                <!-- Glow area under the line -->
+                <path [attr.d]="trendAreaPath" fill="url(#areaGrad)"></path>
+
+                <!-- Glow effect on the stroke line -->
+                <path [attr.d]="trendLinePath" fill="none" stroke="url(#lineGrad)" stroke-width="3" class="trend-path"></path>
+
+                <!-- Data markers (circles) -->
+                @for (pt of trendPoints; track pt.label; let idx = $index) {
+                  <circle
+                    [attr.cx]="pt.x"
+                    [attr.cy]="pt.y"
+                    r="4"
+                    fill="#111827"
+                    stroke="#8b5cf6"
+                    stroke-width="2"
+                    class="trend-marker"
+                    (mouseenter)="puntoHovered = pt"
+                    (mouseleave)="puntoHovered = null"
+                  >
+                  </circle>
+                  <!-- X-Axis Labels (Months names) -->
+                  <text [attr.x]="pt.x" y="136" fill="var(--text-muted)" font-size="8" text-anchor="middle">
+                    {{ pt.label }}
+                  </text>
+                }
+              } @else {
+                <text x="250" y="75" fill="var(--text-muted)" font-size="10" text-anchor="middle">No hay datos de tendencia mensual.</text>
+              }
+            </svg>
+
+            <!-- Floating HTML tooltip for precision viewing on hover -->
+            @if (puntoHovered) {
+              <div 
+                class="chart-tooltip glass-card"
+                [style.left.%]="(puntoHovered.x / 500) * 100"
+                [style.top.%]="(puntoHovered.y / 150) * 100"
+              >
+                <div class="tooltip-title">{{ puntoHovered.label }} {{ puntoHovered.anio }}</div>
+                <div class="tooltip-value">${{ puntoHovered.value | number:'1.2-2' }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Columna Derecha: Formulario de Facturación Rápida -->
+    <!-- Columna Derecha: Formulario de Facturación Rápida y Control de Caducidades -->
     <div class="billing-col">
       <app-billing-form (ventaRegistrada)="cargarDatos()"></app-billing-form>
+
+      <!-- Panel de Lotes Próximos a Caducar y Descuentos -->
+      <div class="glass-card discount-management-card" style="margin-top: 1.5rem; padding: 1.25rem;">
+        <header class="card-header" style="margin-bottom: 1rem;">
+          <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
+            <i class="fa-solid fa-tags" style="color: var(--primary-color);"></i> Control de Caducidades y Descuentos
+          </h3>
+          <p class="subtitle" style="font-size: 0.8rem; margin: 0.25rem 0 0 0; color: var(--text-muted); line-height: 1.35;">
+            Lotes en bodega próximos a vencer. Los descuentos se aplican automáticamente en ventas.
+          </p>
+        </header>
+
+        <div class="expiring-list" style="display: flex; flex-direction: column; gap: 0.85rem; max-height: 380px; overflow-y: auto; padding-right: 0.25rem;">
+          @for (item of stocksExpiring; track item.productoKey + '_' + item.lote + '_' + item.sucursalKey) {
+            <div class="expiring-item glass-card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; position: relative;">
+              
+              <!-- Producto y Sucursal -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">{{ item.nombreProducto }}</h4>
+                  <span style="font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem;">
+                    <i class="icon-shop" style="font-size: 0.7rem;"></i> {{ item.nombreSucursal }}
+                  </span>
+                </div>
+                <!-- Badge de Lote -->
+                <code style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">
+                  {{ item.lote }}
+                </code>
+              </div>
+
+              <!-- Info de Stock y Fecha -->
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                <span class="text-muted">Stock: <strong>{{ item.stock }} uds</strong></span>
+                <span style="display: flex; align-items: center; gap: 0.25rem; font-weight: 600; color: #f87171;">
+                  <i class="fa-solid fa-clock" style="font-size: 0.75rem;"></i> Vence: {{ item.fechaCaducidad }}
+                </span>
+              </div>
+
+              <!-- Sección de Descuento (Admin vs Gerente) -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.5rem;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                  <span style="color: #fbbf24;">%</span> Descuento Activo:
+                </span>
+                
+                @if (session?.role === 'admin') {
+                  <!-- Editor inline de descuento para Administrador -->
+                  <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <div style="position: relative; display: flex; align-items: center;">
+                      <input 
+                        type="number" 
+                        min="0" max="90" 
+                        [(ngModel)]="item.descuentoPorcentaje" 
+                        style="width: 55px; height: 28px; padding: 0.2rem 1.1rem 0.2rem 0.4rem; font-size: 0.75rem; border-radius: 6px; text-align: center; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: #fff;"
+                      >
+                      <span style="position: absolute; right: 4px; font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">%</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      class="btn btn-accent btn-small" 
+                      (click)="guardarDescuento(item)"
+                      style="padding: 0.2rem 0.4rem; height: 28px; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center; min-width: 32px; background: var(--primary-color); border: none; color: #fff; border-radius: 6px; cursor: pointer;"
+                      title="Guardar descuento"
+                    >
+                      <i class="icon-save" style="margin: 0; font-size: 0.8rem;"></i>
+                    </button>
+                  </div>
+                } @else {
+                  <!-- Vista de solo lectura para Gerentes / otros -->
+                  @if (item.descuentoPorcentaje > 0) {
+                    <span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.4rem; border-radius: 8px;">
+                      {{ item.descuentoPorcentaje }}% OFF
+                    </span>
+                  } @else {
+                    <span class="text-muted" style="font-size: 0.75rem; font-style: italic;">Sin desc. (Solo Admin)</span>
+                  }
+                }
+              </div>
+
+            </div>
+          } @empty {
+            <div class="text-center text-muted" style="padding: 2rem 0; font-size: 0.85rem;">
+              No hay lotes con fecha de vencimiento registrada en inventario.
+            </div>
+          }
+        </div>
+      </div>
+
     </div>
 
   </div>

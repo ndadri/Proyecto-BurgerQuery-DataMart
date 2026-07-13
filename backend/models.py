@@ -124,7 +124,10 @@ class StockSucursal(db.Model):
     
     SucursalKey = db.Column('SucursalKey', db.Integer, db.ForeignKey('Dim_Sucursal.SucursalKey'), primary_key=True)
     ProductoKey = db.Column('ProductoKey', db.Integer, db.ForeignKey('Dim_Producto.ProductoKey'), primary_key=True)
+    Lote = db.Column('Lote', db.String(50), primary_key=True)
+    FechaCaducidad = db.Column('FechaCaducidad', db.Date, nullable=True)
     Stock = db.Column('Stock', db.Integer, nullable=False)
+    DescuentoPorcentaje = db.Column('DescuentoPorcentaje', db.Integer, default=0)
     
     # Relaciones para joins
     sucursal = db.relationship('DimSucursal', backref='stocks')
@@ -134,7 +137,10 @@ class StockSucursal(db.Model):
         return {
             'SucursalKey': self.SucursalKey,
             'ProductoKey': self.ProductoKey,
+            'Lote': self.Lote,
+            'FechaCaducidad': self.FechaCaducidad.isoformat() if self.FechaCaducidad else None,
             'Stock': self.Stock,
+            'DescuentoPorcentaje': self.DescuentoPorcentaje,
             'Producto': self.producto.to_dict() if self.producto else None,
             'Sucursal': self.sucursal.to_dict() if self.sucursal else None
         }

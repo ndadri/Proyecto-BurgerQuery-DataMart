@@ -43,8 +43,11 @@ CREATE TABLE "Dim_Sucursal" (
 CREATE TABLE "Stock_Sucursal" (
     "SucursalKey" INT REFERENCES "Dim_Sucursal"("SucursalKey"),
     "ProductoKey" INT REFERENCES "Dim_Producto"("ProductoKey"),
+    "Lote" VARCHAR(50) NOT NULL,
+    "FechaCaducidad" DATE,
     "Stock" INT NOT NULL,
-    PRIMARY KEY ("SucursalKey", "ProductoKey")
+    "DescuentoPorcentaje" INT DEFAULT 0,
+    PRIMARY KEY ("SucursalKey", "ProductoKey", "Lote")
 );
 
 CREATE TABLE "Dim_Personal" (
@@ -70,13 +73,52 @@ CREATE TABLE "Fact_Ventas" (
     "Hora" INT NOT NULL DEFAULT 12
 );
 
--- Función del Trigger para actualizar stock automáticamente
+-- Función del Trigger para actualizar stock automáticamente usando FEFO (First Expired, First Out)
 CREATE OR REPLACE FUNCTION actualizar_stock_por_venta()
 RETURNS TRIGGER AS $$
+DECLARE
+    cant_a_descontar INT := NEW."Cantidad";
+    r RECORD;
 BEGIN
-    UPDATE "Stock_Sucursal"
-    SET "Stock" = "Stock" - NEW."Cantidad"
-    WHERE "SucursalKey" = NEW."SucursalKey" AND "ProductoKey" = NEW."ProductoKey";
+    FOR r IN 
+        SELECT "SucursalKey", "ProductoKey", "Lote", "Stock"
+        FROM "Stock_Sucursal"
+        WHERE "SucursalKey" = NEW."SucursalKey" AND "ProductoKey" = NEW."ProductoKey"
+        ORDER BY "FechaCaducidad" ASC NULLS LAST, "Lote" ASC
+        FOR UPDATE
+    LOOP
+        IF cant_a_descontar <= 0 THEN
+            EXIT;
+        END IF;
+
+        IF r."Stock" >= cant_a_descontar THEN
+            UPDATE "Stock_Sucursal"
+            SET "Stock" = "Stock" - cant_a_descontar
+            WHERE "SucursalKey" = r."SucursalKey" AND "ProductoKey" = r."ProductoKey" AND "Lote" = r."Lote";
+            cant_a_descontar := 0;
+        ELSE
+            cant_a_descontar := cant_a_descontar - r."Stock";
+            UPDATE "Stock_Sucursal"
+            SET "Stock" = 0
+            WHERE "SucursalKey" = r."SucursalKey" AND "ProductoKey" = r."ProductoKey" AND "Lote" = r."Lote";
+        END IF;
+    END LOOP;
+
+    -- Si aún queda cantidad por descontar, descontar del primer lote (para permitir stock negativo si no hay suficiente)
+    IF cant_a_descontar > 0 THEN
+        UPDATE "Stock_Sucursal"
+        SET "Stock" = "Stock" - cant_a_descontar
+        WHERE "SucursalKey" = NEW."SucursalKey" 
+          AND "ProductoKey" = NEW."ProductoKey" 
+          AND "Lote" = (
+              SELECT "Lote" 
+              FROM "Stock_Sucursal" 
+              WHERE "SucursalKey" = NEW."SucursalKey" AND "ProductoKey" = NEW."ProductoKey"
+              ORDER BY "FechaCaducidad" ASC NULLS LAST, "Lote" ASC
+              LIMIT 1
+          );
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -113,6 +155,12 @@ INSERT INTO "Dim_Sucursal" ("SucursalID", "NombreSucursal", "Ciudad") VALUES
 (304, 'Sucursal Solanda', 'Quito');
 
 INSERT INTO "Dim_Tiempo" ("TiempoKey", "Fecha", "Dia", "Mes", "NombreMes", "Anio", "Trimestre") VALUES
+(20260115, '2026-01-15', 15, 1, 'Enero', 2026, 1),
+(20260215, '2026-02-15', 15, 2, 'Febrero', 2026, 1),
+(20260315, '2026-03-15', 15, 3, 'Marzo', 2026, 1),
+(20260415, '2026-04-15', 15, 4, 'Abril', 2026, 2),
+(20260515, '2026-05-15', 15, 5, 'Mayo', 2026, 2),
+(20260615, '2026-06-15', 15, 6, 'Junio', 2026, 2),
 (20260701, '2026-07-01', 1, 7, 'Julio', 2026, 3),
 (20260702, '2026-07-02', 2, 7, 'Julio', 2026, 3),
 (20260703, '2026-07-03', 3, 7, 'Julio', 2026, 3),
@@ -123,6 +171,39 @@ INSERT INTO "Dim_Tiempo" ("TiempoKey", "Fecha", "Dia", "Mes", "NombreMes", "Anio
 (20260708, '2026-07-08', 8, 7, 'Julio', 2026, 3);
 
 INSERT INTO "Fact_Ventas" ("TiempoKey", "ProductoKey", "ClienteKey", "SucursalKey", "Cantidad", "PrecioAplicado", "MontoTotal", "Descuento", "Hora") VALUES
+-- Enero 2026
+(20260115, 1, 1, 1, 10, 5.99, 59.90, 0.00, 12),
+(20260115, 3, 2, 2, 15, 2.49, 37.35, 0.00, 13),
+(20260115, 5, 3, 3, 20, 1.99, 39.80, 0.00, 14),
+-- Febrero 2026
+(20260215, 2, 4, 2, 12, 6.49, 77.88, 0.00, 12),
+(20260215, 4, 5, 4, 8, 4.99, 39.92, 0.00, 13),
+(20260215, 5, 1, 1, 15, 1.99, 29.85, 0.00, 15),
+(20260215, 6, 2, 3, 5, 3.49, 17.45, 0.00, 16),
+-- Marzo 2026
+(20260315, 1, 3, 3, 20, 5.99, 119.80, 0.00, 12),
+(20260315, 3, 4, 1, 25, 2.49, 62.25, 0.00, 13),
+(20260315, 5, 5, 2, 30, 1.99, 59.70, 0.00, 14),
+(20260315, 6, 1, 4, 10, 3.49, 34.90, 0.00, 17),
+-- Abril 2026
+(20260415, 2, 2, 4, 18, 6.49, 116.82, 0.00, 12),
+(20260415, 3, 3, 3, 20, 2.49, 49.80, 0.00, 13),
+(20260415, 4, 4, 2, 12, 4.99, 59.88, 0.00, 15),
+(20260415, 5, 5, 1, 25, 1.99, 49.75, 0.00, 16),
+-- Mayo 2026
+(20260515, 1, 1, 1, 25, 5.99, 149.75, 0.00, 12),
+(20260515, 2, 2, 2, 15, 6.49, 97.35, 0.00, 13),
+(20260515, 3, 3, 3, 30, 2.49, 74.70, 0.00, 14),
+(20260515, 5, 4, 4, 40, 1.99, 79.60, 0.00, 15),
+(20260515, 6, 5, 1, 15, 3.49, 52.35, 0.00, 16),
+-- Junio 2026
+(20260615, 1, 2, 3, 35, 5.99, 209.65, 0.00, 12),
+(20260615, 2, 3, 2, 25, 6.49, 162.25, 0.00, 13),
+(20260615, 3, 4, 1, 40, 2.49, 99.60, 0.00, 14),
+(20260615, 4, 5, 4, 15, 4.99, 74.85, 0.00, 16),
+(20260615, 5, 1, 2, 50, 1.99, 99.50, 0.00, 17),
+(20260615, 6, 2, 3, 20, 3.49, 69.80, 0.00, 18),
+-- Julio 2026 (existentes)
 (20260706, 1, 1, 1, 2, 5.99, 11.98, 0.00, 12),
 (20260706, 3, 2, 1, 1, 2.49, 2.49, 0.00, 13),
 (20260706, 5, 3, 2, 2, 1.99, 3.98, 0.00, 13),
@@ -164,19 +245,62 @@ INSERT INTO "Fact_Ventas" ("TiempoKey", "ProductoKey", "ClienteKey", "SucursalKe
 -- DATOS SEMILLA PARA STOCK POR SUCURSAL
 -- ==========================================
 
-INSERT INTO "Stock_Sucursal" ("SucursalKey", "ProductoKey", "Stock") VALUES
--- Producto 1 (Hamburguesa Doble Queso - Total: 150): La Basílica=60, Cumbayá=45, La Carolina=30, Solanda=15
-(1, 1, 60), (2, 1, 45), (3, 1, 30), (4, 1, 15),
--- Producto 2 (Hamburguesa de Pollo Crispy - Total: 120): La Basílica=48, Cumbayá=36, La Carolina=24, Solanda=12
-(1, 2, 48), (2, 2, 36), (3, 2, 24), (4, 2, 12),
--- Producto 3 (Papas Fritas Medianas - Total: 300): La Basílica=120, Cumbayá=90, La Carolina=60, Solanda=30
-(1, 3, 120), (2, 3, 90), (3, 3, 60), (4, 3, 30),
--- Producto 4 (Nuggets de Pollo - Total: 200): La Basílica=80, Cumbayá=60, La Carolina=40, Solanda=20
-(1, 4, 80), (2, 4, 60), (3, 4, 40), (4, 4, 20),
--- Producto 5 (Refresco de Cola Grande - Total: 500): La Basílica=200, Cumbayá=150, La Carolina=100, Solanda=50
-(1, 5, 200), (2, 5, 150), (3, 5, 100), (4, 5, 50),
--- Producto 6 (Malteada de Vainilla - Total: 80): La Basílica=32, Cumbayá=24, La Carolina=16, Solanda=8
-(1, 6, 32), (2, 6, 24), (3, 6, 16), (4, 6, 8);
+INSERT INTO "Stock_Sucursal" ("SucursalKey", "ProductoKey", "Lote", "FechaCaducidad", "Stock", "DescuentoPorcentaje") VALUES
+-- Producto 1 (Hamburguesa Doble Queso)
+(1, 1, 'L-H101', '2026-07-25', 40, 0),
+(1, 1, 'L-H102', '2026-09-15', 20, 0),
+(2, 1, 'L-H101', '2026-07-25', 30, 0),
+(2, 1, 'L-H102', '2026-09-15', 15, 0),
+(3, 1, 'L-H101', '2026-07-25', 20, 0),
+(3, 1, 'L-H102', '2026-09-15', 10, 0),
+(4, 1, 'L-H101', '2026-07-25', 10, 0),
+(4, 1, 'L-H102', '2026-09-15', 5, 0),
+
+-- Producto 2 (Hamburguesa de Pollo Crispy)
+(1, 2, 'L-P201', '2026-07-20', 30, 20), -- Lote próximo a caducar con 20% de descuento
+(1, 2, 'L-P202', '2026-10-01', 18, 0),
+(2, 2, 'L-P201', '2026-07-20', 20, 0),
+(2, 2, 'L-P202', '2026-10-01', 16, 0),
+(3, 2, 'L-P201', '2026-07-20', 14, 0),
+(3, 2, 'L-P202', '2026-10-01', 10, 0),
+(4, 2, 'L-P201', '2026-07-20', 8, 0),
+(4, 2, 'L-P202', '2026-10-01', 4, 0),
+
+-- Producto 3 (Papas Fritas Medianas)
+(1, 3, 'L-PF301', '2026-08-05', 80, 0),
+(1, 3, 'L-PF302', '2026-11-15', 40, 0),
+(2, 3, 'L-PF301', '2026-08-05', 60, 0),
+(2, 3, 'L-PF302', '2026-11-15', 30, 0),
+(3, 3, 'L-PF301', '2026-08-05', 40, 0),
+(3, 3, 'L-PF302', '2026-11-15', 20, 0),
+(4, 3, 'L-PF301', '2026-08-05', 20, 0),
+(4, 3, 'L-PF302', '2026-11-15', 10, 0),
+
+-- Producto 4 (Nuggets de Pollo)
+(1, 4, 'L-N401', '2026-07-28', 50, 0),
+(1, 4, 'L-N402', '2026-10-10', 30, 0),
+(2, 4, 'L-N401', '2026-07-28', 40, 0),
+(2, 4, 'L-N402', '2026-10-10', 20, 0),
+(3, 4, 'L-N401', '2026-07-28', 25, 0),
+(3, 4, 'L-N402', '2026-10-10', 15, 0),
+(4, 4, 'L-N401', '2026-07-28', 12, 0),
+(4, 4, 'L-N402', '2026-10-10', 8, 0),
+
+-- Producto 5 (Refresco de Cola Grande)
+(1, 5, 'L-R501', '2026-12-31', 200, 0),
+(2, 5, 'L-R501', '2026-12-31', 150, 0),
+(3, 5, 'L-R501', '2026-12-31', 100, 0),
+(4, 5, 'L-R501', '2026-12-31', 50, 0),
+
+-- Producto 6 (Malteada de Vainilla)
+(1, 6, 'L-M601', '2026-07-22', 20, 0),
+(1, 6, 'L-M602', '2026-09-01', 12, 0),
+(2, 6, 'L-M601', '2026-07-22', 15, 0),
+(2, 6, 'L-M602', '2026-09-01', 9, 0),
+(3, 6, 'L-M601', '2026-07-22', 10, 0),
+(3, 6, 'L-M602', '2026-09-01', 6, 0),
+(4, 6, 'L-M601', '2026-07-22', 5, 0),
+(4, 6, 'L-M602', '2026-09-01', 3, 0);
 
 
 -- ==========================================

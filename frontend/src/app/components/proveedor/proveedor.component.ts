@@ -27,6 +27,9 @@ export class ProveedorComponent implements OnInit {
   sucursalKeySelected: number | null = null;
   productoKeySelected: number | null = null;
   cantidadToSend: number | null = null;
+  loteToSend: string = '';
+  fechaCaducidadToSend: string = '';
+  sucursalFiltro: string = 'all';
 
   // Estados
   cargando = false;
@@ -86,8 +89,8 @@ export class ProveedorComponent implements OnInit {
   }
 
   enviarStockSubmit(): void {
-    if (!this.sucursalKeySelected || !this.productoKeySelected || !this.cantidadToSend) {
-      this.mensajeError = 'Por favor complete todos los campos del formulario.';
+    if (!this.sucursalKeySelected || !this.productoKeySelected || !this.cantidadToSend || !this.loteToSend) {
+      this.mensajeError = 'Por favor complete todos los campos obligatorios del formulario (Sucursal, Producto, Cantidad y Lote).';
       return;
     }
 
@@ -103,15 +106,19 @@ export class ProveedorComponent implements OnInit {
     const sucKey = Number(this.sucursalKeySelected);
     const prodKey = Number(this.productoKeySelected);
     const cant = Number(this.cantidadToSend);
+    const lote = this.loteToSend;
+    const fechaCad = this.fechaCaducidadToSend ? this.fechaCaducidadToSend : undefined;
 
-    this.apiService.supplyStock(sucKey, prodKey, cant).subscribe({
+    this.apiService.supplyStock(sucKey, prodKey, cant, lote, fechaCad).subscribe({
       next: (res) => {
-        this.mensajeExito = `¡Éxito! ${res.message} (Nuevo stock de este producto en la sucursal: ${res.stock} unidades).`;
+        this.mensajeExito = `¡Éxito! ${res.message} (Nuevo stock de este lote en la sucursal: ${res.stock} unidades).`;
         this.enviando = false;
         
         // Limpiar inputs del formulario
         this.productoKeySelected = null;
         this.cantidadToSend = null;
+        this.loteToSend = '';
+        this.fechaCaducidadToSend = '';
 
         // Recargar tabla de stocks
         this.cargarDatos();
@@ -132,5 +139,75 @@ export class ProveedorComponent implements OnInit {
   obtenerNombreProducto(key: number): string {
     const p = this.productos.find(prod => prod.ProductoKey === key);
     return p ? p.Nombre : `Producto #${key}`;
+  }
+
+  get stocksPorSucursal() {
+    const grouped: { 
+      [key: string]: { 
+        nombre: string; 
+        productos: {
+          nombre: string;
+          categoria: string;
+          totalStock: number;
+          lotes: any[];
+        }[];
+      } 
+    } = {};
+    
+    this.stocks.forEach(item => {
+      const sucKey = item.nombreSucursal;
+      if (!grouped[sucKey]) {
+        grouped[sucKey] = {
+          nombre: item.nombreSucursal,
+          productos: []
+        };
+      }
+      
+      let prodGroup = grouped[sucKey].productos.find(p => p.nombre === item.nombreProducto);
+      if (!prodGroup) {
+        prodGroup = {
+          nombre: item.nombreProducto,
+          categoria: item.categoria,
+          totalStock: 0,
+          lotes: []
+        };
+        grouped[sucKey].productos.push(prodGroup);
+      }
+      
+      prodGroup.totalStock += item.stock;
+      prodGroup.lotes.push({
+        lote: item.lote,
+        fechaCaducidad: item.fechaCaducidad,
+        stock: item.stock,
+        descuentoPorcentaje: item.descuentoPorcentaje
+      });
+    });
+    
+    // Ordenar lotes por fecha de caducidad
+    Object.values(grouped).forEach(suc => {
+      suc.productos.forEach(prod => {
+        prod.lotes.sort((a, b) => {
+          if (!a.fechaCaducidad) return 1;
+          if (!b.fechaCaducidad) return -1;
+          return new Date(a.fechaCaducidad).getTime() - new Date(b.fechaCaducidad).getTime();
+        });
+      });
+    });
+    
+    let filtered = Object.values(grouped);
+    if (this.sucursalFiltro !== 'all') {
+      filtered = filtered.filter(suc => suc.nombre === this.sucursalFiltro);
+    }
+    
+    return filtered;
+  }
+
+  esFechaProxima(fechaStr: string): boolean {
+    if (!fechaStr) return false;
+    const expDate = new Date(fechaStr);
+    const hoy = new Date();
+    const diffTime = expDate.getTime() - hoy.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 30; // Expira en menos de 30 días
   }
 }

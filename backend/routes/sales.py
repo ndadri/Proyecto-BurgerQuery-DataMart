@@ -156,6 +156,38 @@ def obtener_reporte_olap():
         sucursal_key = request.args.get('sucursalKey', type=int)
         dia_semana = request.args.get('diaSemana', type=int)
         hora = request.args.get('hora', type=int)
+        categoria = request.args.get('categoria', type=str)
+        fecha_str = request.args.get('fecha', type=str)
+        producto_key = request.args.get('productoKey', type=int)
+        cliente_key = request.args.get('clienteKey', type=int)
+        venta_id = request.args.get('ventaId', type=int)
+        fecha_inicio_str = request.args.get('fechaInicio', type=str)
+        fecha_fin_str = request.args.get('fechaFin', type=str)
+
+        # Validar y parsear fecha única
+        fecha = None
+        if fecha_str:
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        # Validar y parsear rango de fechas
+        fecha_inicio = None
+        if fecha_inicio_str:
+            try:
+                fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        fecha_fin = None
+        if fecha_fin_str:
+            try:
+                fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        has_time_filter = bool(dia_semana or (hora is not None) or fecha or fecha_inicio or fecha_fin)
 
         # 1. KPIs Generales
         kpis_query = db.session.query(
@@ -164,16 +196,16 @@ def obtener_reporte_olap():
             func.coalesce(func.sum(FactVentas.Cantidad), 0).label('unidades_vendidas'),
             func.coalesce(func.sum(FactVentas.Descuento), 0).label('total_descuentos')
         )
-        if dia_semana or hora is not None:
+        if has_time_filter:
             kpis_query = kpis_query.join(DimTiempo, FactVentas.TiempoKey == DimTiempo.TiempoKey)
         
-        # 2. Ventas por Categoría (Join con DimProducto)
+        # 2. Ventas por Categoría (Join con DimProducto) - NEVER filtered by category itself so that all categories remain visible
         ventas_categoria_query = db.session.query(
             DimProducto.Categoria,
             func.coalesce(func.sum(FactVentas.MontoTotal), 0).label('total'),
             func.coalesce(func.sum(FactVentas.Cantidad), 0).label('cantidad')
         ).join(FactVentas, DimProducto.ProductoKey == FactVentas.ProductoKey)
-        if dia_semana or hora is not None:
+        if has_time_filter:
             ventas_categoria_query = ventas_categoria_query.join(DimTiempo, FactVentas.TiempoKey == DimTiempo.TiempoKey)
          
         # 3. Ventas por Sucursal (Join con DimSucursal) - NEVER filter this by sucursalKey so that all branches remain listed in the UI!
@@ -184,7 +216,7 @@ def obtener_reporte_olap():
             func.coalesce(func.sum(FactVentas.MontoTotal), 0).label('total'),
             func.coalesce(func.sum(FactVentas.Cantidad), 0).label('cantidad')
         ).join(FactVentas, DimSucursal.SucursalKey == FactVentas.SucursalKey)
-        if dia_semana or hora is not None:
+        if has_time_filter:
             ventas_sucursal_query = ventas_sucursal_query.join(DimTiempo, FactVentas.TiempoKey == DimTiempo.TiempoKey)
          
         # 4. Tendencia Mensual (Join con DimTiempo)
@@ -197,12 +229,17 @@ def obtener_reporte_olap():
          
         # 5. Listado de últimas 10 ventas
         ultimas_ventas_query = FactVentas.query
-        if dia_semana or hora is not None:
+        if has_time_filter:
             # We must join DimTiempo to filter on it
             ultimas_ventas_query = ultimas_ventas_query.join(DimTiempo, FactVentas.TiempoKey == DimTiempo.TiempoKey)
         
-        # 6. Inventario Actualizado (para ver efecto del trigger)
-        productos = DimProducto.query.all()
+        # 6. Inventario Actualizado (para ver efecto del trigger) - Filter products by category if provided
+        productos_query = DimProducto.query
+        if categoria:
+            productos_query = productos_query.filter(DimProducto.Categoria == categoria)
+        if producto_key:
+            productos_query = productos_query.filter(DimProducto.ProductoKey == producto_key)
+        productos = productos_query.all()
         productos_inventario = []
         for p in productos:
             d = p.to_dict()
@@ -246,6 +283,68 @@ def obtener_reporte_olap():
             ventas_sucursal_query = ventas_sucursal_query.filter(FactVentas.Hora == hora)
             ventas_mensuales_query = ventas_mensuales_query.filter(FactVentas.Hora == hora)
             ultimas_ventas_query = ultimas_ventas_query.filter(FactVentas.Hora == hora)
+
+        # Aplicar filtros si se recibe categoria
+        if categoria:
+            kpis_query = kpis_query.join(DimProducto, FactVentas.ProductoKey == DimProducto.ProductoKey).filter(DimProducto.Categoria == categoria)
+            ventas_sucursal_query = ventas_sucursal_query.join(DimProducto, FactVentas.ProductoKey == DimProducto.ProductoKey).filter(DimProducto.Categoria == categoria)
+            ventas_mensuales_query = ventas_mensuales_query.join(DimProducto, FactVentas.ProductoKey == DimProducto.ProductoKey).filter(DimProducto.Categoria == categoria)
+            ultimas_ventas_query = ultimas_ventas_query.join(DimProducto, FactVentas.ProductoKey == DimProducto.ProductoKey).filter(DimProducto.Categoria == categoria)
+            ventas_hora_query = ventas_hora_query.join(DimProducto, FactVentas.ProductoKey == DimProducto.ProductoKey).filter(DimProducto.Categoria == categoria)
+
+        # Aplicar filtros si se recibe fecha
+        if fecha:
+            kpis_query = kpis_query.filter(DimTiempo.Fecha == fecha)
+            ventas_categoria_query = ventas_categoria_query.filter(DimTiempo.Fecha == fecha)
+            ventas_sucursal_query = ventas_sucursal_query.filter(DimTiempo.Fecha == fecha)
+            ventas_mensuales_query = ventas_mensuales_query.filter(DimTiempo.Fecha == fecha)
+            ultimas_ventas_query = ultimas_ventas_query.filter(DimTiempo.Fecha == fecha)
+            ventas_hora_query = ventas_hora_query.filter(DimTiempo.Fecha == fecha)
+
+        # Aplicar filtros si se recibe fecha_inicio
+        if fecha_inicio:
+            kpis_query = kpis_query.filter(DimTiempo.Fecha >= fecha_inicio)
+            ventas_categoria_query = ventas_categoria_query.filter(DimTiempo.Fecha >= fecha_inicio)
+            ventas_sucursal_query = ventas_sucursal_query.filter(DimTiempo.Fecha >= fecha_inicio)
+            ventas_mensuales_query = ventas_mensuales_query.filter(DimTiempo.Fecha >= fecha_inicio)
+            ultimas_ventas_query = ultimas_ventas_query.filter(DimTiempo.Fecha >= fecha_inicio)
+            ventas_hora_query = ventas_hora_query.filter(DimTiempo.Fecha >= fecha_inicio)
+
+        # Aplicar filtros si se recibe fecha_fin
+        if fecha_fin:
+            kpis_query = kpis_query.filter(DimTiempo.Fecha <= fecha_fin)
+            ventas_categoria_query = ventas_categoria_query.filter(DimTiempo.Fecha <= fecha_fin)
+            ventas_sucursal_query = ventas_sucursal_query.filter(DimTiempo.Fecha <= fecha_fin)
+            ventas_mensuales_query = ventas_mensuales_query.filter(DimTiempo.Fecha <= fecha_fin)
+            ultimas_ventas_query = ultimas_ventas_query.filter(DimTiempo.Fecha <= fecha_fin)
+            ventas_hora_query = ventas_hora_query.filter(DimTiempo.Fecha <= fecha_fin)
+
+        # Aplicar filtros si se recibe producto_key
+        if producto_key:
+            kpis_query = kpis_query.filter(FactVentas.ProductoKey == producto_key)
+            ventas_categoria_query = ventas_categoria_query.filter(FactVentas.ProductoKey == producto_key)
+            ventas_sucursal_query = ventas_sucursal_query.filter(FactVentas.ProductoKey == producto_key)
+            ventas_mensuales_query = ventas_mensuales_query.filter(FactVentas.ProductoKey == producto_key)
+            ultimas_ventas_query = ultimas_ventas_query.filter(FactVentas.ProductoKey == producto_key)
+            ventas_hora_query = ventas_hora_query.filter(FactVentas.ProductoKey == producto_key)
+
+        # Aplicar filtros si se recibe cliente_key
+        if cliente_key:
+            kpis_query = kpis_query.filter(FactVentas.ClienteKey == cliente_key)
+            ventas_categoria_query = ventas_categoria_query.filter(FactVentas.ClienteKey == cliente_key)
+            ventas_sucursal_query = ventas_sucursal_query.filter(FactVentas.ClienteKey == cliente_key)
+            ventas_mensuales_query = ventas_mensuales_query.filter(FactVentas.ClienteKey == cliente_key)
+            ultimas_ventas_query = ultimas_ventas_query.filter(FactVentas.ClienteKey == cliente_key)
+            ventas_hora_query = ventas_hora_query.filter(FactVentas.ClienteKey == cliente_key)
+
+        # Aplicar filtros si se recibe venta_id
+        if venta_id:
+            kpis_query = kpis_query.filter(FactVentas.VentaID == venta_id)
+            ventas_categoria_query = ventas_categoria_query.filter(FactVentas.VentaID == venta_id)
+            ventas_sucursal_query = ventas_sucursal_query.filter(FactVentas.VentaID == venta_id)
+            ventas_mensuales_query = ventas_mensuales_query.filter(FactVentas.VentaID == venta_id)
+            ultimas_ventas_query = ultimas_ventas_query.filter(FactVentas.VentaID == venta_id)
+            ventas_hora_query = ventas_hora_query.filter(FactVentas.VentaID == venta_id)
 
         # Ejecutar consultas
         kpis = kpis_query.first()

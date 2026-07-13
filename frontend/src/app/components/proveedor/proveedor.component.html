@@ -29,13 +29,27 @@
   <!-- Layout Principal -->
   <div class="main-layout">
     
-    <!-- Columna Izquierda: Tabla de Stock Completa -->
+    <!-- Columna Izquierda: Stocks Separados por Sucursales y agrupados por Producto -->
     <div class="analytics-col">
-      <div class="glass-card table-card">
-        <div class="card-header-flex">
-          <h3>Inventario Actual por Sucursal</h3>
+      <div class="glass-card table-card" style="padding: 1.5rem;">
+        <div class="card-header-flex" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <h3 style="margin: 0;"><i class="icon-analytics"></i> Inventario Actual por Sucursal</h3>
+            
+            <!-- Selector de Sucursal -->
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label for="filtroSucursal" class="text-muted" style="font-size: 0.85rem; margin: 0; white-space: nowrap;">Filtrar Sucursal:</label>
+              <select id="filtroSucursal" [(ngModel)]="sucursalFiltro" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; padding: 0.3rem 0.75rem; font-size: 0.85rem; outline: none; cursor: pointer;">
+                <option value="all">Todas las Sucursales</option>
+                @for (suc of sucursales; track suc.SucursalKey) {
+                  <option [value]="suc.NombreSucursal">{{ suc.NombreSucursal }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          
           <button class="btn btn-secondary btn-small" (click)="cargarDatos()" [disabled]="cargando">
-            <i class="icon-analytics"></i> Actualizar Tabla
+            <i class="icon-refresh"></i> Actualizar Tabla
           </button>
         </div>
         
@@ -45,50 +59,104 @@
             <p>Consultando stock en tiempo real...</p>
           </div>
         } @else {
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Sucursal</th>
-                  <th>Producto</th>
-                  <th>Categoría</th>
-                  <th class="text-right">Stock</th>
-                  <th class="text-center" style="width: 120px;">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of stocks; track item.sucursalKey + '_' + item.productoKey) {
-                  <tr>
-                    <td><strong>{{ item.nombreSucursal }}</strong></td>
-                    <td>{{ item.nombreProducto }}</td>
-                    <td><span class="category-tag">{{ item.categoria }}</span></td>
-                    <td class="text-right font-semibold" [ngClass]="{
-                      'text-danger': item.stock <= 20,
-                      'text-warning': item.stock > 20 && item.stock <= 80,
-                      'text-success': item.stock > 80
-                    }">
-                      {{ item.stock }} uds
-                    </td>
-                    <td class="text-center">
-                      <span class="badge" [ngClass]="{
-                        'badge-danger': item.stock <= 20,
-                        'badge-warning': item.stock > 20 && item.stock <= 80,
-                        'badge-success': item.stock > 80
-                      }">
-                        {{ item.stock <= 20 ? 'Crítico' : (item.stock <= 80 ? 'Moderado' : 'Óptimo') }}
+          <!-- Ciclo por cada Sucursal Agrupada -->
+          @for (suc of stocksPorSucursal; track suc.nombre) {
+            <div class="sucursal-stock-group" style="margin-bottom: 2.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2rem;">
+              <h4 style="margin: 0 0 1.25rem 0; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; font-weight: 800;">
+                <i class="icon-shop"></i> {{ suc.nombre }}
+              </h4>
+              
+              <!-- Ciclo por cada Producto dentro de la Sucursal -->
+              @for (prod of suc.productos; track prod.nombre) {
+                <div class="product-inventory-card" style="margin-bottom: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                  
+                  <!-- Cabecera del Producto: Nombre, Categoría y Stock Total -->
+                  <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1.25rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.04); flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <strong style="font-size: 1rem; color: #fff; font-weight: 700;">{{ prod.nombre }}</strong>
+                      <span class="category-tag" style="margin: 0; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #c084fc; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 12px;">
+                        {{ prod.categoria }}
                       </span>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="5" class="text-center text-muted" style="padding: 3rem 0;">
-                      No se encontraron registros de stock. Inicialice la base de datos primero.
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    <div style="font-size: 0.9rem; font-weight: 600;">
+                      <span class="text-muted">Stock Total:</span>
+                      <strong [ngClass]="{
+                        'text-danger': prod.totalStock <= 20,
+                        'text-warning': prod.totalStock > 20 && prod.totalStock <= 80,
+                        'text-success': prod.totalStock > 80
+                      }" style="margin-left: 0.35rem; font-size: 0.95rem;">
+                        {{ prod.totalStock }} uds
+                      </strong>
+                    </div>
+                  </div>
+                  
+                  <!-- Tabla de Lotes del Producto -->
+                  <div class="table-responsive" style="padding: 0.25rem 0.75rem;">
+                    <table class="data-table" style="box-shadow: none; background: transparent; margin: 0; border: none; width: 100%;">
+                      <thead>
+                        <tr>
+                          <th style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0.5rem 0.75rem;">Lote</th>
+                          <th style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0.5rem 0.75rem;">Fecha Caducidad</th>
+                          <th class="text-right" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0.5rem 0.75rem;">Stock Lote</th>
+                          <th class="text-center" style="width: 110px; background: transparent; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0.5rem 0.75rem;">Estado Lote</th>
+                          <th class="text-right" style="width: 100px; background: transparent; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0.5rem 0.75rem;">Descuento Lote</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (loteItem of prod.lotes; track loteItem.lote) {
+                          <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+                            <td style="padding: 0.6rem 0.75rem;"><code style="background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.8rem; color: var(--text-secondary); font-family: monospace;">{{ loteItem.lote }}</code></td>
+                            <td style="padding: 0.6rem 0.75rem;">
+                              @if (loteItem.fechaCaducidad) {
+                                <span [ngClass]="{'text-danger font-semibold': esFechaProxima(loteItem.fechaCaducidad)}" style="font-size: 0.85rem;">
+                                  {{ loteItem.fechaCaducidad }}
+                                  @if (esFechaProxima(loteItem.fechaCaducidad)) {
+                                    <span style="font-size: 0.7rem; display: block; color: #ef4444; font-weight: normal; margin-top: 0.1rem;">¡Vence pronto!</span>
+                                  }
+                                </span>
+                              } @else {
+                                <span class="text-muted" style="font-size: 0.85rem;">-</span>
+                              }
+                            </td>
+                            <td class="text-right font-semibold" [ngClass]="{
+                              'text-danger': loteItem.stock <= 10,
+                              'text-warning': loteItem.stock > 10 && loteItem.stock <= 40,
+                              'text-success': loteItem.stock > 40
+                            }" style="padding: 0.6rem 0.75rem;">
+                              {{ loteItem.stock }} uds
+                            </td>
+                            <td class="text-center" style="padding: 0.6rem 0.75rem;">
+                              <span class="badge" [ngClass]="{
+                                'badge-danger': loteItem.stock <= 10,
+                                'badge-warning': loteItem.stock > 10 && loteItem.stock <= 40,
+                                'badge-success': loteItem.stock > 40
+                              }">
+                                {{ loteItem.stock <= 10 ? 'Crítico' : (loteItem.stock <= 40 ? 'Moderado' : 'Óptimo') }}
+                              </span>
+                            </td>
+                            <td class="text-right" style="padding: 0.6rem 0.75rem;">
+                              @if (loteItem.descuentoPorcentaje > 0) {
+                                <span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 12px;">
+                                  {{ loteItem.descuentoPorcentaje }}%
+                                </span>
+                              } @else {
+                                <span class="text-muted" style="font-size: 0.8rem;">Sin desc.</span>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
+              }
+            </div>
+          } @empty {
+            <div class="text-center text-muted" style="padding: 3rem 0;">
+              No se encontraron registros de stock. Inicialice la base de datos primero.
+            </div>
+          }
         }
       </div>
     </div>
@@ -132,7 +200,20 @@
           <div class="form-group">
             <label for="cantidadInput"><i class="icon-inventory"></i> Cantidad a Enviar *</label>
             <input type="number" id="cantidadInput" name="cantidadInput" [(ngModel)]="cantidadToSend" min="1" placeholder="Ej: 50" required class="form-control">
-            <small class="help-text">La cantidad ingresada se sumará al inventario actual.</small>
+          </div>
+
+          <!-- Lote / Batch -->
+          <div class="form-group">
+            <label for="loteInput"><i class="icon-analytics"></i> Código de Lote *</label>
+            <input type="text" id="loteInput" name="loteInput" [(ngModel)]="loteToSend" placeholder="Ej: L-H103" required class="form-control">
+            <small class="help-text">Código único del lote provisto por producción.</small>
+          </div>
+
+          <!-- Fecha de Vencimiento / Caducidad -->
+          <div class="form-group">
+            <label for="fechaCaducidadInput"><i class="icon-calendar"></i> Fecha de Vencimiento / Caducidad</label>
+            <input type="date" id="fechaCaducidadInput" name="fechaCaducidadInput" [(ngModel)]="fechaCaducidadToSend" class="form-control">
+            <small class="help-text">Dejar vacío si el insumo no tiene fecha de caducidad.</small>
           </div>
 
           <!-- Botón de Envío -->

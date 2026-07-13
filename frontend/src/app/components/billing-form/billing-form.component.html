@@ -22,7 +22,7 @@
       <!-- Producto -->
       <div class="form-group">
         <label for="producto"><i class="icon-burger"></i> Producto *</label>
-        <select id="producto" name="producto" [(ngModel)]="productoKey" required class="form-control">
+        <select id="producto" name="producto" [(ngModel)]="productoKey" (change)="onProductoChange()" required class="form-control">
           <option [ngValue]="null" disabled selected>Seleccione un Producto</option>
           @for (prod of productos; track prod.ProductoKey) {
             <option [value]="prod.ProductoKey" [disabled]="prod.Stock <= 0">
@@ -71,7 +71,7 @@
       <!-- Cantidad -->
       <div class="form-group">
         <label for="cantidad">Cantidad *</label>
-        <input type="number" id="cantidad" name="cantidad" [(ngModel)]="cantidad" min="1" required class="form-control">
+        <input type="number" id="cantidad" name="cantidad" [(ngModel)]="cantidad" (change)="onCantidadChange()" min="1" required class="form-control">
       </div>
 
       <!-- Descuento -->
@@ -90,6 +90,17 @@
         </select>
       </div>
     </div>
+
+    @if (productoSeleccionadoConDescuento && productoSeleccionadoConDescuento.DescuentoPorcentaje > 0) {
+      <div class="alert alert-info" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.75rem 1rem; font-size: 0.85rem; border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.06); display: flex; flex-direction: column; gap: 0.25rem;">
+        <span style="color: #fbbf24; font-weight: 700; display: flex; align-items: center; gap: 0.35rem;">
+          <i class="fa-solid fa-tag"></i> ¡Lote con Descuento del {{ productoSeleccionadoConDescuento.DescuentoPorcentaje }}%!
+        </span>
+        <span style="color: var(--text-secondary); font-size: 0.8rem;">
+          Lote: <strong>{{ productoSeleccionadoConDescuento.LoteProximaCaducidad }}</strong> - Vence: <strong>{{ productoSeleccionadoConDescuento.FechaCaducidadProxima }}</strong>
+        </span>
+      </div>
+    }
 
     <!-- Panel de Cálculo de Precios (Simulación en tiempo real) -->
     <div class="price-preview">
