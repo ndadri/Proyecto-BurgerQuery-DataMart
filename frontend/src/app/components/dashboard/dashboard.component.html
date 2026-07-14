@@ -5,7 +5,10 @@
       <h1 class="gradient-text"><i class="icon-analytics"></i> BurgerQuery Data Mart</h1>
       <p class="header-subtitle">Panel Analítico de Ventas y Gestión de Inventarios</p>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <button class="btn btn-accent" (click)="abrirModalFacturacion()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; display: inline-flex; align-items: center; gap: 0.5rem; color: #fff;">
+        <i class="fa-solid fa-file-invoice-dollar"></i> Facturar / Nueva Venta
+      </button>
       <button class="btn btn-secondary" (click)="cargarDatos()" [disabled]="cargando">
         <i class="icon-refresh"></i> Actualizar Datos
       </button>
@@ -637,9 +640,8 @@
 
     </div>
 
-    <!-- Columna Derecha: Formulario de Facturación Rápida y Control de Caducidades -->
+    <!-- Columna Derecha: Control de Caducidades -->
     <div class="billing-col">
-      <app-billing-form (ventaRegistrada)="cargarDatos()"></app-billing-form>
 
       <!-- Panel de Lotes Próximos a Caducar y Descuentos -->
       <div class="glass-card discount-management-card" style="margin-top: 1.5rem; padding: 1.25rem;">
@@ -848,6 +850,24 @@
             </button>
           </footer>
         </form>
+      </main>
+    </div>
+  </div>
+  }
+
+  <!-- Modal de Facturación Rápida -->
+  @if (mostrarModalFacturacion) {
+  <div class="modal-overlay animate-fade-in" (click)="cerrarModalFacturacion()">
+    <div class="modal-content glass-card" (click)="$event.stopPropagation()" style="max-width: 650px;">
+      <header class="modal-header">
+        <h2 class="gradient-text"><i class="fa-solid fa-file-invoice-dollar"></i> Facturación Rápida</h2>
+        <button class="btn-close-modal" (click)="cerrarModalFacturacion()">
+          <i class="icon-close"></i>
+        </button>
+      </header>
+      
+      <main class="modal-body" style="padding: 1.5rem; overflow-y: auto;">
+        <app-billing-form (ventaRegistrada)="cargarDatos(); cerrarModalFacturacion()"></app-billing-form>
       </main>
     </div>
   </div>

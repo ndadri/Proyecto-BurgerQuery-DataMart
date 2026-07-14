@@ -48,9 +48,102 @@ def obtener_o_crear_tiempo(fecha_str):
 @sales_bp.route('', methods=['POST'])
 def registrar_venta():
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         
-        # Validar campos obligatorios
+        # Validar si es un registro múltiple de productos
+        if 'Items' in data and isinstance(data['Items'], list):
+            items = data['Items']
+            if len(items) == 0:
+                return jsonify({'error': 'Venta vacía', 'message': 'Debe agregar al menos un producto.'}), 400
+                
+            cliente_key = int(data['ClienteKey'])
+            sucursal_key = int(data['SucursalKey'])
+            fecha_str = data['Fecha']
+            hora = data.get('Hora')
+            
+            # Verificar dimensiones cliente y sucursal
+            cliente = DimCliente.query.get(cliente_key)
+            if not cliente:
+                return jsonify({'error': 'No encontrado', 'message': f'Cliente con llave {cliente_key} no existe.'}), 404
+                
+            sucursal = DimSucursal.query.get(sucursal_key)
+            if not sucursal:
+                return jsonify({'error': 'No encontrado', 'message': f'Sucursal con llave {sucursal_key} no existe.'}), 404
+                
+            # Resolver tiempo
+            try:
+                tiempo_key = obtener_o_crear_tiempo(fecha_str)
+            except ValueError:
+                return jsonify({'error': 'Formato de fecha inválido', 'message': 'Use el formato YYYY-MM-DD.'}), 400
+                
+            # Resolver hora
+            if hora is not None:
+                try:
+                    hora = int(hora)
+                    if hora < 0 or hora > 23:
+                        return jsonify({'error': 'Hora no válida', 'message': 'La hora debe estar entre 0 y 23.'}), 400
+                except ValueError:
+                    return jsonify({'error': 'Hora no válida', 'message': 'La hora debe ser un número entero.'}), 400
+            else:
+                hora = datetime.now().hour
+                
+            # Validar y crear cada item
+            ventas_creadas = []
+            for i, item in enumerate(items):
+                prod_key = int(item['ProductoKey'])
+                cant = int(item['Cantidad'])
+                desc = float(item.get('Descuento', 0.0))
+                
+                if cant <= 0:
+                    return jsonify({'error': 'Cantidad no válida', 'message': f'La cantidad en el ítem {i+1} debe ser mayor a cero.'}), 400
+                if desc < 0:
+                    return jsonify({'error': 'Descuento no válido', 'message': f'El descuento en el ítem {i+1} no puede ser negativo.'}), 400
+                    
+                producto = DimProducto.query.get(prod_key)
+                if not producto:
+                    return jsonify({'error': 'No encontrado', 'message': f'Producto en ítem {i+1} con llave {prod_key} no existe.'}), 404
+                    
+                total_stock = db.session.query(func.sum(StockSucursal.Stock)).filter_by(SucursalKey=sucursal_key, ProductoKey=prod_key).scalar()
+                total_stock = int(total_stock) if total_stock is not None else 0
+                
+                if total_stock == 0:
+                    return jsonify({
+                        'error': 'Stock no inicializado', 
+                        'message': f'La sucursal seleccionada no tiene inventario para {producto.Nombre} (ítem {i+1}).'
+                    }), 400
+                    
+                if total_stock < cant:
+                    return jsonify({
+                        'error': 'Stock insuficiente', 
+                        'message': f'Stock insuficiente para {producto.Nombre} en esta sucursal. Stock disponible: {total_stock}, Solicitado: {cant}'
+                    }), 400
+                    
+                precio_aplicado = float(producto.PrecioUnitario)
+                monto_total = (cant * precio_aplicado) - desc
+                if monto_total < 0:
+                    monto_total = 0.0
+                    
+                nueva_venta = FactVentas(
+                    TiempoKey=tiempo_key,
+                    ProductoKey=prod_key,
+                    ClienteKey=cliente_key,
+                    SucursalKey=sucursal_key,
+                    Cantidad=cant,
+                    PrecioAplicado=precio_aplicado,
+                    MontoTotal=monto_total,
+                    Descuento=desc,
+                    Hora=hora
+                )
+                db.session.add(nueva_venta)
+                ventas_creadas.append(nueva_venta)
+                
+            db.session.commit()
+            return jsonify({
+                'message': f'¡Venta con {len(ventas_creadas)} productos registrada con éxito!',
+                'ventas': [v.to_dict() for v in ventas_creadas]
+            }), 201
+
+        # Caso anterior: Registro único (para compatibilidad retrospectiva)
         required_fields = ['ProductoKey', 'ClienteKey', 'SucursalKey', 'Cantidad', 'Fecha']
         for field in required_fields:
             if field not in data or data[field] is None:
@@ -83,17 +176,19 @@ def registrar_venta():
             return jsonify({'error': 'No encontrado', 'message': f'Sucursal con llave {sucursal_key} no existe.'}), 404
             
         # Validar stock por sucursal
-        stock_sucursal = StockSucursal.query.filter_by(SucursalKey=sucursal_key, ProductoKey=producto_key).first()
-        if not stock_sucursal:
+        total_stock = db.session.query(func.sum(StockSucursal.Stock)).filter_by(SucursalKey=sucursal_key, ProductoKey=producto_key).scalar()
+        total_stock = int(total_stock) if total_stock is not None else 0
+        
+        if total_stock == 0:
             return jsonify({
                 'error': 'Stock no inicializado', 
                 'message': f'La sucursal seleccionada no tiene inventario inicializado para {producto.Nombre}.'
             }), 400
             
-        if stock_sucursal.Stock < cantidad:
+        if total_stock < cantidad:
             return jsonify({
                 'error': 'Stock insuficiente', 
-                'message': f'No hay suficiente stock en esta sucursal para {producto.Nombre}. Stock disponible: {stock_sucursal.Stock}, Solicitado: {cantidad}'
+                'message': f'No hay suficiente stock en esta sucursal para {producto.Nombre}. Stock disponible: {total_stock}, Solicitado: {cantidad}'
             }), 400
             
         # Resolver tiempo
@@ -135,10 +230,6 @@ def registrar_venta():
         
         db.session.add(nueva_venta)
         db.session.commit()
-        
-        # Recargar el stock en la sesión para que retorne el stock actualizado por el trigger
-        if stock_sucursal:
-            db.session.refresh(stock_sucursal)
         
         return jsonify({
             'message': 'Venta registrada con éxito.',
@@ -244,8 +335,8 @@ def obtener_reporte_olap():
         for p in productos:
             d = p.to_dict()
             if sucursal_key:
-                stock_entry = StockSucursal.query.filter_by(SucursalKey=sucursal_key, ProductoKey=p.ProductoKey).first()
-                d['Stock'] = stock_entry.Stock if stock_entry else 0
+                total_stock = db.session.query(func.sum(StockSucursal.Stock)).filter_by(SucursalKey=sucursal_key, ProductoKey=p.ProductoKey).scalar()
+                d['Stock'] = int(total_stock) if total_stock is not None else 0
             else:
                 total_stock = db.session.query(func.sum(StockSucursal.Stock)).filter_by(ProductoKey=p.ProductoKey).scalar()
                 d['Stock'] = int(total_stock) if total_stock is not None else 0
@@ -458,10 +549,13 @@ def editar_venta(venta_id):
         # Si no cambia ni el producto ni la sucursal
         if venta.ProductoKey == producto_key and venta.SucursalKey == sucursal_key:
             diff = cantidad - venta.Cantidad
-            if diff > 0 and new_stock_entry.Stock < diff:
+            total_avail = db.session.query(func.sum(StockSucursal.Stock)).filter_by(SucursalKey=sucursal_key, ProductoKey=producto_key).scalar()
+            total_avail = int(total_avail) if total_avail is not None else 0
+            
+            if diff > 0 and total_avail < diff:
                 return jsonify({
                     'error': 'Stock insuficiente', 
-                    'message': f'No hay suficiente stock en esta sucursal para {producto.Nombre}. Disponible: {new_stock_entry.Stock}, Adicional requerido: {diff}'
+                    'message': f'No hay suficiente stock en esta sucursal para {producto.Nombre}. Disponible: {total_avail}, Adicional requerido: {diff}'
                 }), 400
             new_stock_entry.Stock -= diff
             
@@ -470,14 +564,18 @@ def editar_venta(venta_id):
             # Devolver stock a la combinación anterior
             if old_stock_entry:
                 old_stock_entry.Stock += venta.Cantidad
+            
+            total_avail = db.session.query(func.sum(StockSucursal.Stock)).filter_by(SucursalKey=sucursal_key, ProductoKey=producto_key).scalar()
+            total_avail = int(total_avail) if total_avail is not None else 0
+            
             # Descontar stock de la nueva combinación
-            if new_stock_entry.Stock < cantidad:
+            if total_avail < cantidad:
                 # Revertir devolución antes de fallar
                 if old_stock_entry:
                     old_stock_entry.Stock -= venta.Cantidad
                 return jsonify({
                     'error': 'Stock insuficiente', 
-                    'message': f'No hay suficiente stock en la sucursal destino para {producto.Nombre}. Disponible: {new_stock_entry.Stock}, Solicitado: {cantidad}'
+                    'message': f'No hay suficiente stock en esta sucursal para {producto.Nombre}. Disponible: {total_avail}, Solicitado: {cantidad}'
                 }), 400
             new_stock_entry.Stock -= cantidad
 

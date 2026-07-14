@@ -54,6 +54,43 @@ def get_clientes():
     except Exception as e:
         return jsonify({'error': 'Error al obtener clientes', 'message': str(e)}), 500
 
+@dimensions_bp.route('/clientes', methods=['POST'])
+def crear_cliente():
+    try:
+        data = request.get_json() or {}
+        cliente_id = data.get('ClienteID')
+        nombre_completo = data.get('NombreCompleto')
+        tipo_cliente = data.get('TipoCliente') or 'Regular'
+        
+        if not cliente_id or not nombre_completo:
+            return jsonify({'error': 'Datos incompletos', 'message': 'ClienteID y NombreCompleto son requeridos.'}), 400
+            
+        try:
+            cliente_id = int(cliente_id)
+        except ValueError:
+            return jsonify({'error': 'Tipo incorrecto', 'message': 'ClienteID debe ser un número entero.'}), 400
+            
+        # Verificar si el ClienteID ya existe
+        existente = DimCliente.query.filter_by(ClienteID=cliente_id).first()
+        if existente:
+            return jsonify({'error': 'Duplicado', 'message': f'Ya existe un cliente con ID {cliente_id}.'}), 400
+            
+        nuevo_cliente = DimCliente(
+            ClienteID=cliente_id,
+            NombreCompleto=nombre_completo,
+            TipoCliente=tipo_cliente
+        )
+        db.session.add(nuevo_cliente)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Cliente creado con éxito.',
+            'cliente': nuevo_cliente.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Error al crear cliente', 'message': str(e)}), 500
+
 @dimensions_bp.route('/sucursales', methods=['GET'])
 def get_sucursales():
     try:

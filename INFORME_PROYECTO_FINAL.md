@@ -371,3 +371,4 @@ En `dashboard.component.ts`, el sistema lee la fecha actual de la máquina y res
   La separación física de interfaces y la validación en backend del rol del usuario garantizan que los gerentes locales (`gerente`) no puedan manipular la rentabilidad de los productos aplicando rebajas discrecionales, centralizando esta facultad en el Administrador General (`admin`).
 * **Calidad de Diseño y Visualización de Datos:**
   La división de inventarios en tarjetas anidadas por producto, complementada con el selector de sucursal individual, eliminó por completo la polución de datos y duplicidad de textos, logrando una interfaz intuitiva y apta para operaciones en tiempo real en la cadena de restaurantes BurgerQuery.
+

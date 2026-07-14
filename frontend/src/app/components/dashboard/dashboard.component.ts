@@ -61,6 +61,9 @@ export class DashboardComponent implements OnInit {
   mensajeErrorModal: string | null = null;
   guardandoEdicion = false;
 
+  // Estado del modal de facturación rápida
+  mostrarModalFacturacion = false;
+
   // Campos de edición
   editProductoKey: number | null = null;
   editClienteKey: number | null = null;
@@ -637,5 +640,13 @@ export class DashboardComponent implements OnInit {
     
     const linePath = this.trendLinePath;
     return `${linePath} L ${endX} ${bottomY} L ${startX} ${bottomY} Z`;
+  }
+
+  abrirModalFacturacion(): void {
+    this.mostrarModalFacturacion = true;
+  }
+
+  cerrarModalFacturacion(): void {
+    this.mostrarModalFacturacion = false;
   }
 }

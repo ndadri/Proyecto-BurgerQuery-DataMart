@@ -114,8 +114,9 @@ export class ProveedorComponent implements OnInit {
         this.mensajeExito = `¡Éxito! ${res.message} (Nuevo stock de este lote en la sucursal: ${res.stock} unidades).`;
         this.enviando = false;
         
-        // Limpiar inputs del formulario
+        // Limpiar inputs del formulario y deseleccionar
         this.productoKeySelected = null;
+        this.productoSeleccionadoId = null;
         this.cantidadToSend = null;
         this.loteToSend = '';
         this.fechaCaducidadToSend = '';
@@ -146,6 +147,7 @@ export class ProveedorComponent implements OnInit {
       [key: string]: { 
         nombre: string; 
         productos: {
+          productoKey: number;
           nombre: string;
           categoria: string;
           totalStock: number;
@@ -166,6 +168,7 @@ export class ProveedorComponent implements OnInit {
       let prodGroup = grouped[sucKey].productos.find(p => p.nombre === item.nombreProducto);
       if (!prodGroup) {
         prodGroup = {
+          productoKey: item.productoKey,
           nombre: item.nombreProducto,
           categoria: item.categoria,
           totalStock: 0,
@@ -210,4 +213,67 @@ export class ProveedorComponent implements OnInit {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays >= 0 && diffDays <= 30; // Expira en menos de 30 días
   }
+
+  get chartStocks() {
+    if (!this.productos || this.productos.length === 0) return [];
+    
+    return this.productos.map(p => {
+      let total = 0;
+      this.stocks.forEach(item => {
+        if (item.productoKey === p.ProductoKey) {
+          if (this.sucursalFiltro === 'all' || item.nombreSucursal === this.sucursalFiltro) {
+            total += item.stock;
+          }
+        }
+      });
+      
+      let color = '#8b5cf6'; // Hamburguesas
+      if (p.Categoria === 'Acompañamientos') color = '#3b82f6';
+      else if (p.Categoria === 'Bebidas') color = '#06b6d4';
+      else if (p.Categoria === 'Postres') color = '#f59e0b';
+      
+      return {
+        productoKey: p.ProductoKey,
+        nombre: p.Nombre,
+        categoria: p.Categoria,
+        stock: total,
+        color: color
+      };
+    });
+  }
+
+  get maxChartStock(): number {
+    const stocks = this.chartStocks.map(item => item.stock);
+    if (stocks.length === 0) return 1;
+    const maxVal = Math.max(...stocks);
+    return maxVal > 0 ? maxVal : 1;
+  }
+
+  productoSeleccionadoId: number | null = null;
+
+  seleccionarProducto(key: number): void {
+    if (this.productoSeleccionadoId === key) {
+      this.productoSeleccionadoId = null;
+      this.productoKeySelected = null;
+      return;
+    }
+    
+    this.productoKeySelected = key;
+    this.productoSeleccionadoId = key;
+    
+    // Desplazamiento suave al formulario
+    const formCard = document.querySelector('.form-card');
+    if (formCard) {
+      formCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Foco en el input de cantidad
+    setTimeout(() => {
+      const inputCant = document.getElementById('cantidadInput') as HTMLInputElement;
+      if (inputCant) {
+        inputCant.focus();
+      }
+    }, 600);
+  }
 }
+

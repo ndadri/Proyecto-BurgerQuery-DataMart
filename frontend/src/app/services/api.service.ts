@@ -31,6 +31,10 @@ export class ApiService {
     return this.http.get<DimCliente[]>(`${this.baseUrl}/dimensiones/clientes`);
   }
 
+  crearCliente(payload: any): Observable<{ message: string; cliente: DimCliente }> {
+    return this.http.post<{ message: string; cliente: DimCliente }>(`${this.baseUrl}/dimensiones/clientes`, payload);
+  }
+
   getSucursales(): Observable<DimSucursal[]> {
     return this.http.get<DimSucursal[]>(`${this.baseUrl}/dimensiones/sucursales`);
   }
